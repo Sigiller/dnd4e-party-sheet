@@ -1,12 +1,17 @@
 import {
   FLAG_SCOPE,
+  MODULE_ID,
   STASH_ACTOR_NAME,
   type PartyFolderFlags,
   type StashActorFlags,
 } from "../constants.js";
-import { getPartyFolderName, getStashOwnershipLevel } from "../settings.js";
+import { getPartyFolderName } from "../settings.js";
 import { ensureStashActorUnfoldered } from "./stash-actor.js";
 import type { Actor, Folder } from "../foundry-globals.js";
+
+function isGmUser(): boolean {
+  return Boolean(game.user?.isGM);
+}
 
 export function getPartyFolder(): Folder | undefined {
   const name = getPartyFolderName().trim().toLowerCase();
@@ -34,7 +39,7 @@ function buildStashOwnership(): Record<string, number> {
   const ownership: Record<string, number> = {
     default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE,
   };
-  const playerLevel = getStashOwnershipLevel();
+  const playerLevel = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
   for (const user of game.users.contents) {
     if (user.isGM) {
       ownership[user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
@@ -45,15 +50,49 @@ function buildStashOwnership(): Record<string, number> {
   return ownership;
 }
 
-export async function ensureStashActor(folder: Folder): Promise<Actor> {
+async function syncStashOwnership(actor: Actor): Promise<void> {
+  if (!isGmUser()) return;
+  const target = buildStashOwnership();
+  const current = { ...(actor.ownership ?? {}) };
+  let changed = false;
+
+  for (const [userId, level] of Object.entries(target)) {
+    if (current[userId] !== level) {
+      current[userId] = level;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    await actor.update({ ownership: current }, { render: false });
+  }
+}
+
+export async function ensureStashActor(folder: Folder): Promise<Actor | null> {
   const flags = getPartyFlags(folder);
   if (flags.stashActorId) {
     const existing = game.actors.get(flags.stashActorId);
     if (existing) {
-      await repairStashActorData(existing);
-      await ensureStashActorUnfoldered(existing);
+      if (isGmUser()) {
+        await syncStashOwnership(existing);
+        await repairStashActorData(existing);
+        await ensureStashActorUnfoldered(existing);
+      }
       return existing;
     }
+    if (!isGmUser()) {
+      ui.notifications?.warn(
+        game.i18n.localize(`${MODULE_ID}.sheet.stash.notInitialized`),
+        { localize: false }
+      );
+      return null;
+    }
+  } else if (!isGmUser()) {
+    ui.notifications?.warn(
+      game.i18n.localize(`${MODULE_ID}.sheet.stash.notInitialized`),
+      { localize: false }
+    );
+    return null;
   }
 
   const stashFlags: StashActorFlags = { isStash: true, partyFolderId: folder.id };
@@ -88,6 +127,7 @@ export async function ensureStashActor(folder: Folder): Promise<Actor> {
 
 /** Fix invalid system fields so dnd4e DataModel validation passes (e.g. actionpoints.value must be int). */
 async function repairStashActorData(actor: Actor): Promise<void> {
+  if (!isGmUser()) return;
   const ap = (actor.system as { actionpoints?: { value?: unknown } })?.actionpoints;
   const raw = ap?.value;
   if (raw === undefined || raw === null) return;
@@ -110,6 +150,8 @@ export async function resolvePartyContext(folderId?: string): Promise<{
   if (!folder || folder.type !== "Actor") return null;
 
   const stashActor = await ensureStashActor(folder);
+  if (!stashActor) return null;
+
   const flags = getPartyFlags(folder);
   return { folder, flags, stashActor };
 }

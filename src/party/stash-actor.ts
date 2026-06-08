@@ -40,12 +40,14 @@ export function hideStashActorsInDirectory(root: HTMLElement): void {
 
 /** Stash lives outside the Party folder so it is not listed among party PCs. */
 export async function ensureStashActorUnfoldered(actor: Actor): Promise<void> {
+  if (!game.user?.isGM) return;
   if (!isStashActor(actor)) return;
   if (getActorFolderId(actor) === null) return;
   await actor.update({ folder: null }, { render: false });
 }
 
 export async function relocateAllStashActors(): Promise<void> {
+  if (!game.user?.isGM) return;
   for (const actor of game.actors.contents) {
     if (isStashActor(actor)) await ensureStashActorUnfoldered(actor);
   }

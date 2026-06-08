@@ -12,6 +12,7 @@ import {
   subtractStashCurrencyExact,
   type CurrencyRecord,
 } from "./stash-currency.js";
+import { canEditStashCurrency } from "./stash-permissions.js";
 
 const COIN_KEYS = [...CURRENCY_DISPLAY_ORDER] as string[];
 const ALL_KEYS = [...COIN_KEYS, RITUALCOMP_RS_KEY];
@@ -143,6 +144,7 @@ function wireSubtractDialogListeners(start: unknown): void {
 }
 
 export async function promptAddStashCurrency(stashActor: Actor): Promise<boolean> {
+  if (!canEditStashCurrency(stashActor)) return false;
   const title = loc("addTitle");
   const result = await foundry.applications.api.DialogV2.input({
     window: { title },
@@ -166,6 +168,7 @@ export async function promptAddStashCurrency(stashActor: Actor): Promise<boolean
 }
 
 export async function promptSubtractStashCurrency(stashActor: Actor): Promise<boolean> {
+  if (!canEditStashCurrency(stashActor)) return false;
   const title = loc("subtractTitle");
   let applied = false;
 

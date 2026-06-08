@@ -1,9 +1,7 @@
 import { MODULE_ID } from "./constants.js";
 
 export const SETTING_PARTY_FOLDER = "partyFolderName";
-export const SETTING_STASH_OWNERSHIP = "stashActorOwnership";
-
-export type StashOwnershipSetting = "LIMITED" | "OWNER";
+export const SETTING_ALLOW_PLAYER_STASH_CURRENCY = "allowPlayerStashCurrency";
 
 export function registerSettings(): void {
   game.settings.register(MODULE_ID, SETTING_PARTY_FOLDER, {
@@ -15,17 +13,13 @@ export function registerSettings(): void {
     default: "Party",
   });
 
-  game.settings.register(MODULE_ID, SETTING_STASH_OWNERSHIP, {
-    name: game.i18n.localize(`${MODULE_ID}.settings.stashActorOwnership.name`),
-    hint: game.i18n.localize(`${MODULE_ID}.settings.stashActorOwnership.hint`),
+  game.settings.register(MODULE_ID, SETTING_ALLOW_PLAYER_STASH_CURRENCY, {
+    name: game.i18n.localize(`${MODULE_ID}.settings.allowPlayerStashCurrency.name`),
+    hint: game.i18n.localize(`${MODULE_ID}.settings.allowPlayerStashCurrency.hint`),
     scope: "world",
     config: true,
-    type: String,
-    choices: {
-      LIMITED: game.i18n.localize(`${MODULE_ID}.settings.stashActorOwnership.limited`),
-      OWNER: game.i18n.localize(`${MODULE_ID}.settings.stashActorOwnership.owner`),
-    },
-    default: "LIMITED",
+    type: Boolean,
+    default: true,
   });
 }
 
@@ -33,9 +27,6 @@ export function getPartyFolderName(): string {
   return String(game.settings.get(MODULE_ID, SETTING_PARTY_FOLDER) ?? "Party");
 }
 
-export function getStashOwnershipLevel(): number {
-  const key = game.settings.get(MODULE_ID, SETTING_STASH_OWNERSHIP) as StashOwnershipSetting;
-  return key === "OWNER"
-    ? CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
-    : CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED;
+export function allowPlayerStashCurrency(): boolean {
+  return Boolean(game.settings.get(MODULE_ID, SETTING_ALLOW_PLAYER_STASH_CURRENCY));
 }

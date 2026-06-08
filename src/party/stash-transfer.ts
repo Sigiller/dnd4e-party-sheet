@@ -2,6 +2,7 @@ import { MODULE_ID } from "../constants.js";
 import type { Actor, Item } from "../foundry-globals.js";
 import { isPartyMember } from "./party-members.js";
 import { isStashActor } from "./stash-actor.js";
+import { canEditStash } from "./stash-permissions.js";
 import {
   getItemStackQuantity,
   parseTransferQuantity,
@@ -150,16 +151,6 @@ function canTransferItemFromActor(item: Item): boolean {
   if (!item.actor) return false;
   if (isStashActor(item.actor)) return canEditStash(item.actor);
   return canTakeItem(item);
-}
-
-function canEditStash(stashActor: Actor): boolean {
-  const user = game.user;
-  if (!user) return false;
-  return (
-    user.isGM ||
-    stashActor.testUserPermission(user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER) ||
-    stashActor.testUserPermission(user, CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED)
-  );
 }
 
 export async function resolveTransferQuantity(item: Item): Promise<number | null> {

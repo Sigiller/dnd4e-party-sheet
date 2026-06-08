@@ -1,4 +1,5 @@
 import type { Actor } from "../foundry-globals.js";
+import { canEditStashCurrency } from "./stash-permissions.js";
 import {
   CURRENCY_DISPLAY_ORDER,
   GP_SUBTRACT_ORDER,
@@ -175,6 +176,7 @@ export async function addStashCurrency(
   stashActor: Actor,
   deltas: CurrencyDeltas
 ): Promise<void> {
+  if (!canEditStashCurrency(stashActor)) return;
   const currency = (stashActor.system?.currency ?? {}) as CurrencyRecord;
   const ritualcomp = (stashActor.system?.ritualcomp ?? {}) as CurrencyRecord;
   const { currency: nextCurrency, ritualcomp: nextRitual } = applyAdd(currency, ritualcomp, deltas);
@@ -188,6 +190,7 @@ export async function subtractStashCurrencyExact(
   stashActor: Actor,
   deltas: CurrencyDeltas
 ): Promise<{ ok: true } | { ok: false }> {
+  if (!canEditStashCurrency(stashActor)) return { ok: false };
   const currency = (stashActor.system?.currency ?? {}) as CurrencyRecord;
   const ritualcomp = (stashActor.system?.ritualcomp ?? {}) as CurrencyRecord;
   const result = applySubtractExact(currency, ritualcomp, deltas);
@@ -203,6 +206,7 @@ export async function subtractStashCurrencyByGp(
   stashActor: Actor,
   gpTotal: number
 ): Promise<{ ok: true } | { ok: false }> {
+  if (!canEditStashCurrency(stashActor)) return { ok: false };
   const currency = (stashActor.system?.currency ?? {}) as CurrencyRecord;
   const ritualcomp = (stashActor.system?.ritualcomp ?? {}) as CurrencyRecord;
   const result = applySubtractByGpSum(currency, gpTotal);

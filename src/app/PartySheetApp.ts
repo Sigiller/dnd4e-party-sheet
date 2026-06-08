@@ -4,6 +4,7 @@ import { buildPartySnapshot } from "../party/party-data.js";
 import { prepareInventorySections, computeStashLoad } from "../party/inventory-prep.js";
 import { currencyToGp } from "../party/wealth.js";
 import { getPartyFolderName } from "../settings.js";
+import { canEditStash, canEditStashCurrency } from "../party/stash-permissions.js";
 import { mountPartySheet, unmountPartySheet } from "./mount.js";
 import type { PartySheetProps } from "./PartySheetRoot.js";
 
@@ -58,10 +59,8 @@ export class PartySheetApp extends ApplicationV2 {
       folderId: ctx.folder.id,
       flags: getPartyFlags(ctx.folder),
       stashActorId: ctx.stashActor.id,
-      canEdit:
-        !!game.user?.isGM ||
-        ctx.stashActor.testUserPermission(game.user!, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER) ||
-        ctx.stashActor.testUserPermission(game.user!, CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED),
+      canEdit: canEditStash(ctx.stashActor),
+      canEditCurrency: canEditStashCurrency(ctx.stashActor),
       snapshot,
       stash: {
         sections: inventory,

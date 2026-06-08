@@ -17,6 +17,7 @@ export interface PartySheetProps {
   flags: PartyFolderFlags;
   stashActorId: string;
   canEdit: boolean;
+  canEditCurrency: boolean;
   snapshot: PartySnapshot;
   stash: {
     sections: InventorySection[];
@@ -80,6 +81,7 @@ export function PartySheetRoot(props: PartySheetProps) {
             snapshot={props.snapshot}
             stash={props.stash}
             canEdit={props.canEdit}
+            canEditCurrency={props.canEditCurrency}
             stashActorId={props.stashActorId}
             onRefresh={props.onRefresh}
           />

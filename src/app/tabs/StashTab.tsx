@@ -21,10 +21,11 @@ interface StashTabProps {
   };
   stashActorId: string;
   canEdit: boolean;
+  canEditCurrency: boolean;
   onRefresh: () => void;
 }
 
-export function StashTab({ snapshot, stash, stashActorId, canEdit, onRefresh }: StashTabProps) {
+export function StashTab({ snapshot, stash, stashActorId, canEdit, canEditCurrency, onRefresh }: StashTabProps) {
   const tabRef = useRef<HTMLDivElement>(null);
   const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
 
@@ -43,7 +44,7 @@ export function StashTab({ snapshot, stash, stashActorId, canEdit, onRefresh }: 
           stashActorId={stashActorId}
           currency={stash.currency}
           ritualcomp={stash.ritualcomp}
-          canEdit={canEdit}
+          canEdit={canEditCurrency}
           onChanged={onRefresh}
         />
         <PartyStashInventory

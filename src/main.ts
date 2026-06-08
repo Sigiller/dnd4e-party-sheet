@@ -3,7 +3,7 @@ import { registerSettings } from "./settings.js";
 import { registerPartyFolderHooks, openPartySheetFromApi } from "./folder/party-folder.js";
 import { schedulePartySheetRefresh } from "./app/PartySheetApp.js";
 import { isPartyMember } from "./party/party-members.js";
-import { getPartyFolder } from "./party/party-store.js";
+import { getPartyFolder, ensureStashActor } from "./party/party-store.js";
 import { isStashActor, registerStashActorHooks, relocateAllStashActors } from "./party/stash-actor.js";
 import { registerStashActorSheetDropHook } from "./party/stash-sheet-drop-hook.js";
 
@@ -27,7 +27,11 @@ Hooks.once("ready", async () => {
       getPartyFolder,
     };
   }
-  await relocateAllStashActors();
+  if (game.user?.isGM) {
+    await relocateAllStashActors();
+    const folder = getPartyFolder();
+    if (folder) await ensureStashActor(folder);
+  }
   await registerStashActorSheetDropHook();
   console.log(`${MODULE_ID} | ready`);
 });

@@ -5,11 +5,9 @@
         "name": "Party Folder Name",
         "hint": "Actor folder name that represents the party (sheet icon appears on this folder)."
       },
-      "stashActorOwnership": {
-        "name": "Stash Actor Player Ownership",
-        "hint": "Ownership level granted to active players on the party stash actor.",
-        "limited": "Limited (edit items)",
-        "owner": "Owner"
+      "allowPlayerStashCurrency": {
+        "name": "Players Can Edit Stash Currency",
+        "hint": "When enabled, active players can add and subtract currency on the Stash tab. When disabled, only the GM can change stash currency."
       }
     },
     "sheet": {
@@ -55,7 +53,8 @@
           "subtractByGp": "Subtract by total GP value (sum of fields below; uses cheapest coins first)",
           "confirm": "Apply",
           "insufficientFunds": "The stash does not have enough funds for this subtraction."
-        }
+        },
+        "notInitialized": "The party stash is not ready yet. Ask your GM to open the Party Sheet once so it can be set up."
       },
       "openSheet": "Open Party Sheet",
       "noPartyFolder": "No actor folder named \"{name}\" was found. Create an Actor folder with that exact name (default: Party) or change the module setting."
