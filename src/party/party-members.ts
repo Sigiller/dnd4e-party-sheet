@@ -62,7 +62,9 @@ export function isPartyMember(actor: Actor, partyFolderId?: string | null): bool
   if (isStashActor(actor)) return false;
 
   const folderId = partyFolderId ?? getPartyFolder()?.id ?? null;
-  if (folderId && isDirectChildOfPartyFolder(actor, folderId)) return true;
+  if (folderId) {
+    return isDirectChildOfPartyFolder(actor, folderId);
+  }
 
   return hasPlayerOrTrustedOwner(actor);
 }

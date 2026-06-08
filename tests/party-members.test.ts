@@ -30,7 +30,10 @@ function isPartyMemberLogic(
 ): boolean {
   if (actor.type !== PC) return false;
   if (actor.flags?.[FLAG]?.isStash) return false;
-  if (partyFolderId && getActorFolderId(actor) === partyFolderId) return true;
+
+  if (partyFolderId) {
+    return getActorFolderId(actor) === partyFolderId;
+  }
 
   const isPT = (u: (typeof users)[0]) =>
     !u.isGM && u.active && (u.role === PLAYER || u.role === TRUSTED);
@@ -102,6 +105,22 @@ describe("party member rules", () => {
         },
         "party-f",
         []
+      ),
+      false
+    );
+  });
+
+  it("excludes PC in nested subfolder even when player-owned", () => {
+    assert.equal(
+      isPartyMemberLogic(
+        {
+          id: "illusion",
+          type: PC,
+          folder: "party-subfolder",
+          ownership: { u1: OWNER },
+        },
+        "party-f",
+        [{ id: "u1", isGM: false, active: true, role: PLAYER, characterId: "illusion" }]
       ),
       false
     );
