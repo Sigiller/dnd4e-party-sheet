@@ -7,6 +7,7 @@ import {
 } from "../constants.js";
 import { getPartyFolderName } from "../settings.js";
 import { ensureStashActorUnfoldered } from "./stash-actor.js";
+import { buildStashOwnership, syncStashActorOwnership } from "./stash-ownership.js";
 import type { Actor, Folder } from "../foundry-globals.js";
 
 function isGmUser(): boolean {
@@ -35,46 +36,13 @@ export async function updatePartyFlags(
   return next;
 }
 
-function buildStashOwnership(): Record<string, number> {
-  const ownership: Record<string, number> = {
-    default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE,
-  };
-  const playerLevel = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-  for (const user of game.users.contents) {
-    if (user.isGM) {
-      ownership[user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-    } else if (user.active && (user.role === CONST.USER_ROLES.PLAYER || user.role === CONST.USER_ROLES.TRUSTED)) {
-      ownership[user.id] = playerLevel;
-    }
-  }
-  return ownership;
-}
-
-async function syncStashOwnership(actor: Actor): Promise<void> {
-  if (!isGmUser()) return;
-  const target = buildStashOwnership();
-  const current = { ...(actor.ownership ?? {}) };
-  let changed = false;
-
-  for (const [userId, level] of Object.entries(target)) {
-    if (current[userId] !== level) {
-      current[userId] = level;
-      changed = true;
-    }
-  }
-
-  if (changed) {
-    await actor.update({ ownership: current }, { render: false });
-  }
-}
-
 export async function ensureStashActor(folder: Folder): Promise<Actor | null> {
   const flags = getPartyFlags(folder);
   if (flags.stashActorId) {
     const existing = game.actors.get(flags.stashActorId);
     if (existing) {
       if (isGmUser()) {
-        await syncStashOwnership(existing);
+        await syncStashActorOwnership(existing);
         await repairStashActorData(existing);
         await ensureStashActorUnfoldered(existing);
       }
@@ -139,6 +107,16 @@ async function repairStashActorData(actor: Actor): Promise<void> {
 export function getStashActor(folder: Folder): Actor | undefined {
   const id = getPartyFlags(folder).stashActorId;
   return id ? game.actors.get(id) : undefined;
+}
+
+export async function syncPartyStashOwnership(): Promise<void> {
+  if (!game.user?.isGM) return;
+
+  const folder = getPartyFolder();
+  if (!folder) return;
+
+  const stash = getStashActor(folder);
+  if (stash) await syncStashActorOwnership(stash);
 }
 
 export async function resolvePartyContext(folderId?: string): Promise<{

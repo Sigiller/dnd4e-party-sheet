@@ -9,15 +9,23 @@ function isActivePlayerUser(user: User): boolean {
   );
 }
 
+function stashOwnershipLevel(stashActor: Actor, user: User): number {
+  const ownership = stashActor.ownership ?? {};
+  if (user.id in ownership) return Number(ownership[user.id]);
+  return Number(ownership.default ?? CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE);
+}
+
+function hasStashPermission(stashActor: Actor, user: User, minLevel: number): boolean {
+  if (user.isGM) return true;
+  if (stashActor.testUserPermission(user, minLevel)) return true;
+  return stashOwnershipLevel(stashActor, user) >= minLevel;
+}
+
 /** Edit stash items, drag-drop, item controls. */
 export function canEditStash(stashActor: Actor): boolean {
   const user = game.user;
   if (!user) return false;
-  return (
-    user.isGM ||
-    stashActor.testUserPermission(user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER) ||
-    stashActor.testUserPermission(user, CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED)
-  );
+  return hasStashPermission(stashActor, user, CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED);
 }
 
 /** Add/subtract party stash currency. */
@@ -27,5 +35,5 @@ export function canEditStashCurrency(stashActor: Actor): boolean {
   if (user.isGM) return true;
   if (!allowPlayerStashCurrency()) return false;
   if (!isActivePlayerUser(user)) return false;
-  return stashActor.testUserPermission(user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER);
+  return hasStashPermission(stashActor, user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER);
 }

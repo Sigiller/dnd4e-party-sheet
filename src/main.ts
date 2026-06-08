@@ -3,7 +3,7 @@ import { registerSettings } from "./settings.js";
 import { registerPartyFolderHooks, openPartySheetFromApi } from "./folder/party-folder.js";
 import { schedulePartySheetRefresh } from "./app/PartySheetApp.js";
 import { isPartyMember } from "./party/party-members.js";
-import { getPartyFolder, ensureStashActor } from "./party/party-store.js";
+import { getPartyFolder, ensureStashActor, syncPartyStashOwnership } from "./party/party-store.js";
 import { isStashActor, registerStashActorHooks, relocateAllStashActors } from "./party/stash-actor.js";
 import { registerStashActorSheetDropHook } from "./party/stash-sheet-drop-hook.js";
 
@@ -34,6 +34,22 @@ Hooks.once("ready", async () => {
   }
   await registerStashActorSheetDropHook();
   console.log(`${MODULE_ID} | ready`);
+});
+
+function scheduleStashOwnershipSync(): void {
+  if (!game.user?.isGM) return;
+  void syncPartyStashOwnership();
+}
+
+Hooks.on("userConnected", () => {
+  scheduleStashOwnershipSync();
+});
+
+Hooks.on("updateUser", (_user, changes) => {
+  if (!game.user?.isGM) return;
+  if ("active" in changes || "role" in changes) {
+    scheduleStashOwnershipSync();
+  }
 });
 
 function shouldRefreshPartySheet(doc: Actor | Item): boolean {
