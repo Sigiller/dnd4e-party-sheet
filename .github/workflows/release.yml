@@ -43,6 +43,7 @@ jobs:
           set -euo pipefail
           MODULE_ID=$(jq -r .id module.json)
           BASE="https://github.com/${REPO}/releases/download/${TAG}"
+          LATEST_MANIFEST="https://github.com/${REPO}/releases/latest/download/module.json"
           mkdir -p "staging/${MODULE_ID}"
           rsync -a \
             --exclude='.git' \
@@ -57,7 +58,7 @@ jobs:
             --exclude='vite.config.ts' \
             --exclude='tsconfig.json' \
             ./ "staging/${MODULE_ID}/"
-          jq --arg manifest "${BASE}/module.json" --arg download "${BASE}/module.zip" \
+          jq --arg manifest "${LATEST_MANIFEST}" --arg download "${BASE}/module.zip" \
             '. + {manifest: $manifest, download: $download}' module.json \
             > "staging/${MODULE_ID}/module.json"
           mkdir -p dist
