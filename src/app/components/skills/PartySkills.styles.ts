@@ -107,13 +107,4 @@ export const SkillsTable = styled.table.attrs({ className: "skills" })`
     text-align: center;
     vertical-align: middle;
   }
-
-  thead .skill-value button {
-    display: inline;
-    width: auto;
-    max-width: 100%;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
 `;

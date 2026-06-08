@@ -1,32 +1,16 @@
-import styled, { css } from "styled-components";
+import type { KeyboardEvent } from "react";
+import styled from "styled-components";
 import { MODULE_ID } from "../../constants.js";
 import { openActorSheet } from "../../party/open-actor-sheet.js";
 
-const ActorNameButton = styled.button<{ $variant?: "heading" | "tableHeader" }>`
+const ActorNameHeading = styled.h3`
   margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  font-weight: inherit;
+  color: ${({ theme }) => theme.colourHeading};
   cursor: pointer;
-  text-decoration: none;
+`;
 
-  &:hover {
-    text-decoration: underline;
-  }
-
-  ${({ $variant, theme }) =>
-    $variant === "tableHeader"
-      ? css`
-          color: inherit;
-          text-transform: inherit;
-          line-height: inherit;
-        `
-      : css`
-          color: ${theme.colourHeading};
-          text-align: left;
-        `}
+const ActorNameTableLabel = styled.span`
+  cursor: pointer;
 `;
 
 interface ActorNameLinkProps {
@@ -34,6 +18,17 @@ interface ActorNameLinkProps {
   children: string;
   variant?: "heading" | "tableHeader";
   className?: string;
+}
+
+function openSheet(actorId: string): void {
+  void openActorSheet(actorId);
+}
+
+function handleKeyActivate(event: KeyboardEvent, actorId: string): void {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    openSheet(actorId);
+  }
 }
 
 export function ActorNameLink({
@@ -44,18 +39,33 @@ export function ActorNameLink({
 }: ActorNameLinkProps) {
   const title = game.i18n.localize(`${MODULE_ID}.sheet.members.openActorSheet`);
 
+  if (variant === "tableHeader") {
+    return (
+      <ActorNameTableLabel
+        className={className}
+        role="button"
+        tabIndex={0}
+        title={title}
+        data-tooltip={title}
+        onClick={() => openSheet(actorId)}
+        onKeyDown={(event) => handleKeyActivate(event, actorId)}
+      >
+        {children}
+      </ActorNameTableLabel>
+    );
+  }
+
   return (
-    <ActorNameButton
-      type="button"
+    <ActorNameHeading
       className={className}
-      $variant={variant}
+      role="button"
+      tabIndex={0}
       title={title}
       data-tooltip={title}
-      onClick={() => {
-        void openActorSheet(actorId);
-      }}
+      onClick={() => openSheet(actorId)}
+      onKeyDown={(event) => handleKeyActivate(event, actorId)}
     >
       {children}
-    </ActorNameButton>
+    </ActorNameHeading>
   );
 }
