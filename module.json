@@ -2,7 +2,7 @@
   "id": "dnd4e-party-sheet",
   "title": "D&D 4e Party Sheet",
   "description": "<p>Party sheet for D&amp;D 4e: overview of PCs, shared skills/languages, and party stash. Foundry v13.</p>",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "authors": [
     {
       "name": "Sigiller",
