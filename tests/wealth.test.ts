@@ -30,3 +30,28 @@ describe("currencyToGp", () => {
     assert.equal(currencyToGp({}, conversion), 0);
   });
 });
+
+function roundGp(gp: number): number {
+  return Math.round(gp * 100) / 100;
+}
+
+function formatGp(gp: number, fixedDecimals?: number): string {
+  const value =
+    fixedDecimals !== undefined ? roundGp(gp).toFixed(fixedDecimals) : String(gp);
+  const [intPart, fracPart] = value.split(".");
+  const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return fracPart !== undefined ? `${withSep}.${fracPart}` : withSep;
+}
+
+function formatPartyTotalGp(gp: number): string {
+  return formatGp(roundGp(gp));
+}
+
+describe("formatPartyTotalGp display", () => {
+  it("rounds to two decimals and trims trailing zeros", () => {
+    assert.equal(formatPartyTotalGp(1234.567), "1,234.57");
+    assert.equal(formatPartyTotalGp(10.1), "10.1");
+    assert.equal(formatPartyTotalGp(10), "10");
+    assert.equal(formatPartyTotalGp(0), "0");
+  });
+});

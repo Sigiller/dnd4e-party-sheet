@@ -14,6 +14,20 @@ export function currencyToGp(currency: CurrencyRecord): number {
   return Math.round(goldSum * 100) / 100;
 }
 
-export function formatGp(gp: number): string {
-  return gp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+export function roundGp(gp: number): number {
+  return Math.round(gp * 100) / 100;
+}
+
+export function formatGp(gp: number, fixedDecimals?: number): string {
+  const value =
+    fixedDecimals !== undefined
+      ? roundGp(gp).toFixed(fixedDecimals)
+      : String(gp);
+  const [intPart, fracPart] = value.split(".");
+  const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return fracPart !== undefined ? `${withSep}.${fracPart}` : withSep;
+}
+
+export function formatPartyTotalGp(gp: number): string {
+  return formatGp(roundGp(gp));
 }

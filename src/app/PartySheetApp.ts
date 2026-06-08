@@ -2,7 +2,7 @@ import { MODULE_ID } from "../constants.js";
 import { getPartyFlags, resolvePartyContext, updatePartyFlags } from "../party/party-store.js";
 import { buildPartySnapshot } from "../party/party-data.js";
 import { prepareInventorySections, computeStashLoad } from "../party/inventory-prep.js";
-import { currencyToGp } from "../party/wealth.js";
+import { currencyToGp, roundGp } from "../party/wealth.js";
 import { getPartyFolderName } from "../settings.js";
 import { canEditStash, canEditStashCurrency } from "../party/stash-permissions.js";
 import { mountPartySheet, unmountPartySheet } from "./mount.js";
@@ -53,7 +53,7 @@ export class PartySheetApp extends ApplicationV2 {
     const stashLoad = computeStashLoad(ctx.stashActor);
     const stashGp = currencyToGp((ctx.stashActor.system?.currency as Record<string, number>) ?? {});
     const membersGp = snapshot.members.reduce((s, m) => s + m.gp, 0);
-    const partyTotalGp = membersGp + stashGp;
+    const partyTotalGp = roundGp(membersGp + stashGp);
 
     const props: PartySheetProps = {
       folderId: ctx.folder.id,

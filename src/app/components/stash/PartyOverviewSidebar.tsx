@@ -1,6 +1,6 @@
 import { MODULE_ID } from "../../../constants.js";
 import type { MemberSummary } from "../../../party/party-data.js";
-import { formatGp } from "../../../party/wealth.js";
+import { formatGp, formatPartyTotalGp } from "../../../party/wealth.js";
 import {
   LoadLine,
   MemberWealthCard,
@@ -29,7 +29,7 @@ export function PartyOverviewSidebar({
       <h3>{title}</h3>
       <WealthCard className="party-total-card">
         <h4>{localize("sheet.stash.partyTotal")}</h4>
-        <WealthGp>{formatGp(partyTotalGp)} gp</WealthGp>
+        <WealthGp>{formatPartyTotalGp(partyTotalGp)} gp</WealthGp>
         <LoadLine>
           {localize("sheet.stash.load")}: {stashLoad}
         </LoadLine>
