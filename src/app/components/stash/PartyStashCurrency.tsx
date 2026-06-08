@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { MODULE_ID } from "../../../constants.js";
 import { CURRENCY_ICONS } from "../../../party/currency-display.js";
 import { getStashCurrencyRows } from "../../../party/stash-currency.js";
@@ -12,6 +13,7 @@ import {
   CurrencyButton,
   CurrencyCell,
   CurrencyCells,
+  CurrencyDivider,
 } from "./PartyStashCurrency.styles.js";
 
 interface PartyStashCurrencyProps {
@@ -54,16 +56,18 @@ export function PartyStashCurrency({
   return (
     <CurrencyBar>
       <CurrencyCells>
-        {rows.map((row) => (
-          <CurrencyCell key={row.key}>
-            <i
-              className={coinIconClass(row.key)}
-              data-tooltip={row.label}
-              aria-label={row.label}
-            />
-            <span className="sep">–</span>
-            <span>{row.value}</span>
-          </CurrencyCell>
+        {rows.map((row, index) => (
+          <Fragment key={row.key}>
+            {index > 0 ? <CurrencyDivider aria-hidden>|</CurrencyDivider> : null}
+            <CurrencyCell>
+              <span>{row.value}</span>
+              <i
+                className={coinIconClass(row.key)}
+                data-tooltip={row.label}
+                aria-label={row.label}
+              />
+            </CurrencyCell>
+          </Fragment>
         ))}
       </CurrencyCells>
       {canEdit ? (

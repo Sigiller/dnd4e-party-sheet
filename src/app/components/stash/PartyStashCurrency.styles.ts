@@ -18,9 +18,16 @@ export const CurrencyCells = styled.div`
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0;
   flex: 1 1 auto;
   min-width: 0;
+`;
+
+export const CurrencyDivider = styled.span`
+  padding: 0 0.4rem;
+  opacity: 0.45;
+  font-weight: 400;
+  user-select: none;
 `;
 
 export const CurrencyCell = styled.div`
@@ -55,11 +62,6 @@ export const CurrencyCell = styled.div`
   }
   i.coin-rs {
     color: #9b6dd7;
-  }
-
-  .sep {
-    opacity: 0.6;
-    font-weight: 400;
   }
 `;
 
