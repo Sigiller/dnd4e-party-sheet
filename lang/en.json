@@ -1,0 +1,64 @@
+{
+  "dnd4e-party-sheet": {
+    "settings": {
+      "partyFolderName": {
+        "name": "Party Folder Name",
+        "hint": "Actor folder name that represents the party (sheet icon appears on this folder)."
+      },
+      "stashActorOwnership": {
+        "name": "Stash Actor Player Ownership",
+        "hint": "Ownership level granted to active players on the party stash actor.",
+        "limited": "Limited (edit items)",
+        "owner": "Owner"
+      }
+    },
+    "sheet": {
+      "title": "Party Sheet",
+      "partyLevel": "Party Level",
+      "partyName": "Party Name",
+      "emblem": "Party Emblem",
+      "tabs": {
+        "overview": "Overview",
+        "stash": "Stash"
+      },
+      "skills": {
+        "title": "Party Skills",
+        "compact": "Compact",
+        "detailed": "Detailed"
+      },
+      "languages": {
+        "title": "Party Languages",
+        "spoken": "Spoken",
+        "script": "Script"
+      },
+      "members": {
+        "title": "Party Members",
+        "openActorSheet": "Open character sheet"
+      },
+      "stash": {
+        "partyOverview": "Party Overview",
+        "partyTotal": "Party Total",
+        "partyStash": "Party Stash",
+        "load": "Load",
+        "wealth": "Wealth",
+        "deleteBlocked": "The Party Stash actor cannot be deleted. Manage items through the Party Sheet Stash tab.",
+        "transferQuantity": {
+          "title": "Transfer Items",
+          "hint": "{name} — how many do you want to transfer? (maximum {max})",
+          "label": "Quantity",
+          "confirm": "Transfer",
+          "invalid": "Enter a whole number from 1 to {max}."
+        },
+        "currency": {
+          "addTitle": "Add to Stash",
+          "subtractTitle": "Subtract from Stash",
+          "subtractByGp": "Subtract by total GP value (sum of fields below; uses cheapest coins first)",
+          "confirm": "Apply",
+          "insufficientFunds": "The stash does not have enough funds for this subtraction."
+        }
+      },
+      "openSheet": "Open Party Sheet",
+      "noPartyFolder": "No actor folder named \"{name}\" was found. Create an Actor folder with that exact name (default: Party) or change the module setting."
+    }
+  }
+}

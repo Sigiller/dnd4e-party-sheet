@@ -1,0 +1,89 @@
+import { MODULE_ID } from "../../../constants.js";
+import { CURRENCY_ICONS } from "../../../party/currency-display.js";
+import { getStashCurrencyRows } from "../../../party/stash-currency.js";
+import {
+  promptAddStashCurrency,
+  promptSubtractStashCurrency,
+} from "../../../party/stash-currency-dialogs.js";
+import type { CurrencyRecord } from "../../../party/stash-currency.js";
+import {
+  CurrencyActions,
+  CurrencyBar,
+  CurrencyButton,
+  CurrencyCell,
+  CurrencyCells,
+} from "./PartyStashCurrency.styles.js";
+
+interface PartyStashCurrencyProps {
+  stashActorId: string;
+  currency: CurrencyRecord;
+  ritualcomp: CurrencyRecord;
+  canEdit: boolean;
+  onChanged: () => void;
+}
+
+function coinIconClass(key: string): string {
+  const base = CURRENCY_ICONS[key] ?? "fas fa-coins";
+  return `${base} coin-${key}`;
+}
+
+export function PartyStashCurrency({
+  stashActorId,
+  currency,
+  ritualcomp,
+  canEdit,
+  onChanged,
+}: PartyStashCurrencyProps) {
+  const rows = getStashCurrencyRows(currency, ritualcomp);
+  const loc = (key: string) => game.i18n.localize(`${MODULE_ID}.sheet.stash.currency.${key}`);
+
+  const handleAdd = async () => {
+    const actor = game.actors.get(stashActorId);
+    if (!actor) return;
+    const ok = await promptAddStashCurrency(actor);
+    if (ok) onChanged();
+  };
+
+  const handleSubtract = async () => {
+    const actor = game.actors.get(stashActorId);
+    if (!actor) return;
+    const ok = await promptSubtractStashCurrency(actor);
+    if (ok) onChanged();
+  };
+
+  return (
+    <CurrencyBar>
+      <CurrencyCells>
+        {rows.map((row) => (
+          <CurrencyCell key={row.key}>
+            <i
+              className={coinIconClass(row.key)}
+              data-tooltip={row.label}
+              aria-label={row.label}
+            />
+            <span className="sep">–</span>
+            <span>{row.value}</span>
+          </CurrencyCell>
+        ))}
+      </CurrencyCells>
+      {canEdit ? (
+        <CurrencyActions>
+          <CurrencyButton
+            type="button"
+            data-tooltip={loc("addTitle")}
+            onClick={() => void handleAdd()}
+          >
+            <i className="fas fa-plus" />
+          </CurrencyButton>
+          <CurrencyButton
+            type="button"
+            data-tooltip={loc("subtractTitle")}
+            onClick={() => void handleSubtract()}
+          >
+            <i className="fas fa-minus" />
+          </CurrencyButton>
+        </CurrencyActions>
+      ) : null}
+    </CurrencyBar>
+  );
+}

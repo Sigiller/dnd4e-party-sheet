@@ -1,0 +1,60 @@
+import { useEffect, type RefObject } from "react";
+import { handleStashDrop } from "../../../party/stash-drop.js";
+
+export function useStashDragDrop(
+  tabRef: RefObject<HTMLElement | null>,
+  stashActorId: string,
+  canEdit: boolean,
+  onItemsChanged: () => void
+): void {
+  useEffect(() => {
+    const el = tabRef.current;
+    if (!el || !canEdit) return;
+
+    const stashActor = game.actors.get(stashActorId);
+    if (!stashActor) return;
+
+    const dragDrop = new foundry.applications.ux.DragDrop({
+      dragSelector: ".item-list.gear .item.gear",
+      dropSelector: null,
+      permissions: {
+        dragstart: () => canEdit,
+        drop: () => canEdit,
+      },
+      callbacks: {
+        dragstart: (event: DragEvent) => {
+          const li = (event.currentTarget as HTMLElement)?.closest(".item.gear");
+          const itemId = li?.getAttribute("data-item-id");
+          const item = itemId ? stashActor.items.get(itemId) : null;
+          if (!item) return;
+          const dragData =
+            typeof (item as { toDragData?: () => object }).toDragData === "function"
+              ? (item as { toDragData: () => object }).toDragData()
+              : { type: "Item", uuid: (item as { uuid?: string }).uuid };
+          event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
+        },
+        dragover: (event: DragEvent) => {
+          const TextEditor = foundry.applications.ux.TextEditor;
+          const data =
+            TextEditor.getDragEventData?.(event) ??
+            TextEditor.implementation?.getDragEventData?.(event);
+          if (data?.type === "Item") {
+            event.preventDefault();
+            if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+          }
+        },
+        drop: async (event: DragEvent) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const ok = await handleStashDrop(event, stashActor);
+          if (ok) onItemsChanged();
+        },
+      },
+    });
+
+    dragDrop.bind(el);
+    return () => {
+      /* DragDrop has no unbind in all versions; re-render replaces DOM */
+    };
+  }, [tabRef, stashActorId, canEdit, onItemsChanged]);
+}
