@@ -48,12 +48,24 @@ export const MemberWealthCard = styled(WealthCard)`
   display: flex;
   flex-direction: row;
   gap: 0.5em;
-  align-items: center;
+  align-items: flex-start;
 
   .thumb {
-    object-fit: cover;
-    border-radius: ${({ theme }) => theme.radiusBadge};
-    border: 1px solid ${({ theme }) => theme.borderMuted};
+    flex: 0 0 48px;
+    align-self: flex-start;
+    width: 48px;
+    aspect-ratio: 1 / 1;
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 48px;
+      object-fit: cover;
+      object-position: top center;
+      border-radius: 6px;
+      border: 2px solid ${({ theme }) => theme.colourPcHead};
+    }
   }
 `;
 

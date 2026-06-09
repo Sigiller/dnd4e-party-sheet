@@ -6,11 +6,13 @@ import { isPartyMember } from "./party/party-members.js";
 import { getPartyFolder, ensureStashActor, syncPartyStashOwnership } from "./party/party-store.js";
 import { isStashActor, registerStashActorHooks, relocateAllStashActors } from "./party/stash-actor.js";
 import { registerStashActorSheetDropHook } from "./party/stash-sheet-drop-hook.js";
+import { registerActorSheetTabHook } from "./party/open-actor-sheet.js";
 
 Hooks.once("init", () => {
   registerSettings();
   registerPartyFolderHooks();
   registerStashActorHooks();
+  registerActorSheetTabHook();
 });
 
 Hooks.once("ready", async () => {

@@ -1,5 +1,9 @@
 import type { Actor, Item } from "../foundry-globals.js";
-import { transferItemOntoStash } from "./stash-transfer.js";
+import {
+  classifyDepositSource,
+  getExternalSourceLabel,
+} from "./stash-deposit-source.js";
+import { copyItemOntoStash, transferItemOntoStash } from "./stash-transfer.js";
 
 function getDropData(event: DragEvent): Record<string, unknown> | null {
   const TextEditor = foundry.applications.ux.TextEditor;
@@ -21,10 +25,16 @@ export async function handleStashDrop(
   if (!data || !isItemDrop(data)) return false;
 
   const ItemClass = Item.implementation as typeof Item & {
-    fromDropData: (data: object) => Promise<import("../foundry-globals.js").Item | null>;
+    fromDropData: (data: object) => Promise<Item | null>;
   };
   const item = await ItemClass.fromDropData(data);
   if (!item) return false;
 
-  return transferItemOntoStash(item, stashActor);
+  const source = classifyDepositSource(data, item);
+  if (source === "inventory") {
+    return transferItemOntoStash(item, stashActor);
+  }
+
+  const sourceLabel = getExternalSourceLabel(data, item);
+  return copyItemOntoStash(item, stashActor, source, sourceLabel);
 }

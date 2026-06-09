@@ -8,6 +8,10 @@
       "allowPlayerStashCurrency": {
         "name": "Players Can Edit Stash Currency",
         "hint": "When enabled, active players can add and subtract currency on the Stash tab. When disabled, only the GM can change stash currency."
+      },
+      "stashChatLog": {
+        "name": "Post Stash Actions to Chat",
+        "hint": "When enabled, currency and item changes on the Party Stash tab are posted as public chat messages."
       }
     },
     "sheet": {
@@ -31,7 +35,8 @@
       },
       "members": {
         "title": "Party Members",
-        "openActorSheet": "Open character sheet"
+        "openActorSheet": "Open character sheet",
+        "openActorSheetInventory": "Open character sheet (Inventory tab)"
       },
       "stash": {
         "partyOverview": "Party Overview",
@@ -54,7 +59,25 @@
           "confirm": "Apply",
           "insufficientFunds": "The stash does not have enough funds for this subtraction."
         },
-        "notInitialized": "The party stash is not ready yet. Ask your GM to open the Party Sheet once so it can be set up."
+        "notInitialized": "The party stash is not ready yet. Ask your GM to open the Party Sheet once so it can be set up.",
+        "chatLog": {
+          "currencyAdded": "<p><strong>{player}</strong> ({character}) added to Party Stash: {details}</p>",
+          "currencyAddedNoCharacter": "<p><strong>{player}</strong> added to Party Stash: {details}</p>",
+          "currencyRemoved": "<p><strong>{player}</strong> ({character}) removed from Party Stash: {details}</p>",
+          "currencyRemovedNoCharacter": "<p><strong>{player}</strong> removed from Party Stash: {details}</p>",
+          "currencyRemovedByGp": "<p><strong>{player}</strong> ({character}) removed currency worth {gp} gp from Party Stash</p>",
+          "currencyRemovedByGpNoCharacter": "<p><strong>{player}</strong> removed currency worth {gp} gp from Party Stash</p>",
+          "itemDepositedFromInventory": "<p><strong>{player}</strong> ({character}) deposited {item} from inventory into Party Stash</p>",
+          "itemAddedFromCompendium": "<p><strong>{player}</strong> ({character}) added {item} to Party Stash from compendium {source}</p>",
+          "itemAddedFromCompendiumNoCharacter": "<p><strong>{player}</strong> added {item} to Party Stash from compendium {source}</p>",
+          "itemAddedFromItemsDirectory": "<p><strong>{player}</strong> ({character}) added {item} to Party Stash from the Items Directory</p>",
+          "itemAddedFromItemsDirectoryNoCharacter": "<p><strong>{player}</strong> added {item} to Party Stash from the Items Directory</p>",
+          "itemsDirectory": "Items Directory",
+          "itemDeposited": "<p><strong>{player}</strong> ({character}) deposited {item} into Party Stash</p>",
+          "itemWithdrawn": "<p><strong>{player}</strong> ({character}) took {item} from Party Stash</p>",
+          "itemDeleted": "<p><strong>{player}</strong> ({character}) removed {item} from Party Stash</p>",
+          "itemDeletedNoCharacter": "<p><strong>{player}</strong> removed {item} from Party Stash</p>"
+        }
       },
       "openSheet": "Open Party Sheet",
       "noPartyFolder": "No actor folder named \"{name}\" was found. Create an Actor folder with that exact name (default: Party) or change the module setting."

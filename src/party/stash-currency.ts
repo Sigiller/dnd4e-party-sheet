@@ -1,6 +1,11 @@
 import type { Actor } from "../foundry-globals.js";
 import { canEditStashCurrency } from "./stash-permissions.js";
 import {
+  logCurrencyAdded,
+  logCurrencyRemoved,
+  logCurrencyRemovedByGp,
+} from "./stash-chat-log.js";
+import {
   CURRENCY_DISPLAY_ORDER,
   GP_SUBTRACT_ORDER,
   RITUALCOMP_RS_KEY,
@@ -184,6 +189,7 @@ export async function addStashCurrency(
     "system.currency": nextCurrency,
     "system.ritualcomp": nextRitual,
   });
+  await logCurrencyAdded(game.user?.character ?? null, deltas);
 }
 
 export async function subtractStashCurrencyExact(
@@ -199,6 +205,7 @@ export async function subtractStashCurrencyExact(
     "system.currency": result.currency,
     "system.ritualcomp": result.ritualcomp,
   });
+  await logCurrencyRemoved(game.user?.character ?? null, deltas);
   return { ok: true };
 }
 
@@ -215,5 +222,6 @@ export async function subtractStashCurrencyByGp(
     "system.currency": result.currency,
     "system.ritualcomp": normalizeRitualcompRecord(ritualcomp),
   });
+  await logCurrencyRemovedByGp(game.user?.character ?? null, gpTotal);
   return { ok: true };
 }

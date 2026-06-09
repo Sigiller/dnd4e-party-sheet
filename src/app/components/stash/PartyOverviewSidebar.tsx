@@ -1,6 +1,8 @@
 import { MODULE_ID } from "../../../constants.js";
 import type { MemberSummary } from "../../../party/party-data.js";
+import { DND4E_ACTOR_INVENTORY_TAB } from "../../../party/open-actor-sheet.js";
 import { formatGp, formatPartyTotalGp } from "../../../party/wealth.js";
+import { ActorNameLink, ActorPortraitLink } from "../ActorNameLink.js";
 import {
   LoadLine,
   MemberWealthCard,
@@ -37,9 +39,22 @@ export function PartyOverviewSidebar({
 
       {members.map((m) => (
         <MemberWealthCard key={m.id}>
-          <img src={m.img} alt="" width={36} height={36} className="thumb" />
+          <ActorPortraitLink
+            actorId={m.id}
+            src={m.img}
+            width={36}
+            height={36}
+            className="thumb"
+            sheetOptions={DND4E_ACTOR_INVENTORY_TAB}
+          />
           <div className="wealth-card-body">
-            <h4>{m.name}</h4>
+            <ActorNameLink
+              actorId={m.id}
+              variant="sidebar"
+              sheetOptions={DND4E_ACTOR_INVENTORY_TAB}
+            >
+              {m.name}
+            </ActorNameLink>
             <WealthGp>{formatGp(m.gp)} gp</WealthGp>
             <LoadLine>
               {localize("sheet.stash.load")}: {m.load.value} / {m.load.max}

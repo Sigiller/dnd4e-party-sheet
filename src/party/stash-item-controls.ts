@@ -1,3 +1,5 @@
+import { logItemDeleted } from "./stash-chat-log.js";
+
 export async function editStashItem(stashActorId: string, itemId: string): Promise<void> {
   const item = game.actors.get(stashActorId)?.items.get(itemId);
   if (!item?.sheet) return;
@@ -20,6 +22,7 @@ export async function deleteStashItem(stashActorId: string, itemId: string): Pro
   }
 
   if (!shouldDelete) return false;
+  await logItemDeleted(item);
   await item.delete();
   return true;
 }

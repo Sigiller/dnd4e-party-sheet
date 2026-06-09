@@ -1,5 +1,6 @@
 import { useEffect, type RefObject } from "react";
 import { handleStashDrop } from "../../../party/stash-drop.js";
+import { isInventoryDropData } from "../../../party/stash-deposit-source.js";
 
 export function useStashDragDrop(
   tabRef: RefObject<HTMLElement | null>,
@@ -40,7 +41,13 @@ export function useStashDragDrop(
             TextEditor.implementation?.getDragEventData?.(event);
           if (data?.type === "Item") {
             event.preventDefault();
-            if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+            if (event.dataTransfer) {
+              event.dataTransfer.dropEffect = isInventoryDropData(
+                data as Record<string, unknown>
+              )
+                ? "move"
+                : "copy";
+            }
           }
         },
         drop: async (event: DragEvent) => {

@@ -16,7 +16,11 @@ declare const foundry: typeof foundry & {
     ux: {
       TextEditor: {
         getDragEventData?: (event: DragEvent) => Record<string, unknown> | null;
-        implementation?: { getDragEventData?: (event: DragEvent) => Record<string, unknown> | null };
+        enrichHTML?: (content: string, options?: object) => Promise<string>;
+        implementation?: {
+          getDragEventData?: (event: DragEvent) => Record<string, unknown> | null;
+          enrichHTML?: (content: string, options?: object) => Promise<string>;
+        };
       };
       DragDrop: new (config: object) => { bind: (el: HTMLElement) => void };
     };
@@ -51,6 +55,7 @@ interface Game {
     get: (module: string, key: string) => unknown;
   };
   modules: Collection<{ id: string; api?: PartySheetApi }>;
+  packs: Collection<{ collection: string; title: string }>;
   system: { id: string } | null;
 }
 
@@ -61,6 +66,7 @@ interface PartySheetApi {
 
 interface User {
   id: string;
+  name: string;
   isGM: boolean;
   active: boolean;
   role: number;
@@ -99,8 +105,12 @@ interface Actor {
   update: (data: object) => Promise<Actor>;
   sheet?: {
     rendered: boolean;
-    render: (force?: boolean) => Promise<void>;
+    render: (options?: boolean | ActorSheetRenderOptions) => Promise<void>;
     bringToFront?: () => void;
+    changeTab?: (tab: string, group: string, options?: { force?: boolean }) => void;
+    tabGroups?: Record<string, string>;
+    element?: HTMLElement;
+    document?: { id: string };
   };
 }
 
@@ -163,3 +173,8 @@ interface LibWrapper {
 }
 
 declare const libWrapper: LibWrapper;
+
+declare const ChatMessage: {
+  create: (data: object) => Promise<unknown>;
+  getSpeaker: (options?: { actor?: Actor }) => object;
+};

@@ -4,6 +4,12 @@ import { isPartyMember } from "./party-members.js";
 import { isStashActor } from "./stash-actor.js";
 import { canEditStash } from "./stash-permissions.js";
 import {
+  logItemDepositedFromInventory,
+  logItemWithdrawn,
+  logItemAddedFromExternal,
+} from "./stash-chat-log.js";
+import type { StashDepositSource } from "./stash-deposit-source.js";
+import {
   getItemStackQuantity,
   parseTransferQuantity,
   shouldPromptTransferQuantity,
@@ -97,9 +103,9 @@ export async function transferItemToActor(
   item: Item,
   targetActor: Actor,
   quantity: number
-): Promise<void> {
+): Promise<Item | null> {
   const sourceActor = item.actor;
-  if (!sourceActor) return;
+  if (!sourceActor) return null;
 
   const ItemClass = getItemClass();
   const maxQty = getItemStackQuantity(item.system?.quantity);
@@ -119,9 +125,9 @@ export async function transferItemToActor(
         })
       : [transformFirst(item)];
 
-  if (!toCreate?.length) return;
+  if (!toCreate?.length) return null;
 
-  await ItemClass.createDocuments(toCreate, {
+  const created = await ItemClass.createDocuments(toCreate, {
     parent: targetActor,
     keepId: crossActor ? false : true,
   });
@@ -134,6 +140,8 @@ export async function transferItemToActor(
       await remaining.update({ "system.quantity": maxQty - qty });
     }
   }
+
+  return created[0] ?? null;
 }
 
 function canTakeItem(item: Item): boolean {
@@ -171,6 +179,35 @@ export async function transferItemOntoStash(
   }
   if (item.actor?.id === stashActor.id) return true;
 
+  const sourceActor = item.actor;
+  if (!sourceActor) return false;
+
+  let qty = quantity;
+  if (qty == null) {
+    const chosen = await resolveTransferQuantity(item);
+    if (chosen === null) return false;
+    qty = chosen;
+  }
+
+  const created = await transferItemToActor(item, stashActor, qty);
+  if (created) {
+    await logItemDepositedFromInventory(sourceActor, created, qty);
+  }
+  return true;
+}
+
+/** Compendium or Items Directory → party stash (copy, not move). */
+export async function copyItemOntoStash(
+  item: Item,
+  stashActor: Actor,
+  source: StashDepositSource,
+  sourceLabel: string,
+  quantity?: number
+): Promise<boolean> {
+  if (!canEditStash(stashActor)) return false;
+  if (item.actor?.id === stashActor.id) return true;
+
+  const ItemClass = getItemClass();
   const maxQty = getItemStackQuantity(item.system?.quantity);
   let qty = quantity;
   if (qty == null) {
@@ -179,7 +216,33 @@ export async function transferItemOntoStash(
     qty = chosen;
   }
 
-  await transferItemToActor(item, stashActor, qty);
+  qty = Math.min(Math.max(1, Math.floor(qty)), maxQty);
+
+  const transformFirst = (source: Item) => {
+    const data = itemToData(source);
+    if (qty < maxQty) return setItemQuantity(data, qty);
+    return data;
+  };
+
+  const toCreate =
+    typeof ItemClass.createWithContents === "function"
+      ? await ItemClass.createWithContents([item], {
+          keepId: false,
+          transformFirst,
+        })
+      : [transformFirst(item)];
+
+  if (!toCreate?.length) return false;
+
+  const created = await ItemClass.createDocuments(toCreate, {
+    parent: stashActor,
+    keepId: false,
+  });
+
+  const createdItem = created[0] ?? null;
+  if (createdItem) {
+    await logItemAddedFromExternal(createdItem, qty, sourceLabel, source);
+  }
   return true;
 }
 
@@ -202,6 +265,9 @@ export async function handleStashItemDropOnActor(
   const chosen = await resolveTransferQuantity(item);
   if (chosen === null) return true;
 
-  await transferItemToActor(item, targetActor, chosen);
+  const created = await transferItemToActor(item, targetActor, chosen);
+  if (created) {
+    await logItemWithdrawn(targetActor, created, chosen);
+  }
   return true;
 }
