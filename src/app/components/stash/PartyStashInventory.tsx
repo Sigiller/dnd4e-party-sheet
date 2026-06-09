@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 import type { InventoryRow, InventorySection } from "../../../party/inventory-prep.js";
 import { deleteStashItem, editStashItem } from "../../../party/stash-item-controls.js";
 import { StashInventoryRoot } from "./PartyStash.styles.js";
@@ -70,6 +70,21 @@ function ItemControlsRow({
   );
 }
 
+function isInteractiveInventoryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return true;
+  return Boolean(target.closest("a, input, textarea, select, .item-controls, .item-image"));
+}
+
+function handleInventoryHeaderClick(
+  event: MouseEvent<HTMLElement>,
+  itemId: string,
+  toggleExpanded: (id: string) => void
+): void {
+  if (isInteractiveInventoryTarget(event.target)) return;
+  event.preventDefault();
+  toggleExpanded(itemId);
+}
+
 function SectionHeader({ section, canEdit }: { section: InventorySection; canEdit: boolean }) {
   const type = section.id;
 
@@ -113,27 +128,35 @@ function InventoryItemRow({
   canEdit,
   stashActorId,
   onItemsChanged,
+  isExpanded,
+  onToggleExpanded,
 }: {
   section: InventorySection;
   item: InventoryRow;
   canEdit: boolean;
   stashActorId: string;
   onItemsChanged: () => void;
+  isExpanded: boolean;
+  onToggleExpanded: (id: string) => void;
 }) {
   const type = section.id;
   const depleted = item.isDepleted ? " depleted" : "";
+  const collapsed = isExpanded ? "" : " collapsed";
 
   return (
     <li
-      className={`item gear item-card ${type} ${type}-card collapsible collapsed${depleted}`}
+      className={`item gear item-card ${type} ${type}-card collapsible${collapsed}${depleted}`}
       data-item-id={item.id}
     >
-      <div className="flexrow item-header feature-header">
+      <div
+        className="flexrow item-header feature-header"
+        onClick={(event) => handleInventoryHeaderClick(event, item.id, onToggleExpanded)}
+      >
         <div className="item-image item-roll rollable roll-d20">
           <img src={item.img} width={26} height={26} alt="" />
         </div>
 
-        <div className="item-name rollable">
+        <div className="item-name rollable" data-action="itemSummary">
           <h4 className="item-title">{item.name}</h4>
         </div>
 
@@ -180,7 +203,10 @@ function InventoryItemRow({
 
       <div className="item-summary collapsible-content">
         <div className="wrapper">
-          <div className="card-content" />
+          <div
+            className="card-content"
+            dangerouslySetInnerHTML={{ __html: item.descriptionHtml }}
+          />
         </div>
       </div>
     </li>
@@ -195,43 +221,43 @@ export function PartyStashInventory({
   onItemsChanged,
 }: PartyStashInventoryProps) {
   const listRef = useRef<HTMLUListElement>(null);
+  const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(() => new Set());
 
-  useEffect(() => {
-    const root = listRef.current?.closest(".party-stash-inventory");
-    if (!root) return;
-    for (const row of root.querySelectorAll<HTMLElement>(".item.gear")) {
-      row.draggable = canEdit;
-    }
-  }, [canEdit, sections]);
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  };
 
   return (
     <StashInventoryRoot className="party-stash-inventory party-fox-inventory-host">
-      <section className="main flexcol">
-        <section className="tabs-content">
-          <div className="tab inventory active" data-group="primary" data-tab="inventory">
-            <h2 className="tab-title">{title}</h2>
-            <ul className="item-list gear" ref={listRef}>
-              {sections.map((section) => (
-                <li key={section.id} className={`item-group ${section.id}`}>
-                  <SectionHeader section={section} canEdit={canEdit} />
-                  <ul className="items-list">
-                    {section.items.map((item) => (
-                      <InventoryItemRow
-                        key={item.id}
-                        section={section}
-                        item={item}
-                        canEdit={canEdit}
-                        stashActorId={stashActorId}
-                        onItemsChanged={onItemsChanged}
-                      />
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      </section>
+      <div className="tab inventory active" data-group="primary" data-tab="inventory">
+        <h2 className="tab-title">{title}</h2>
+        <ul className="item-list gear" ref={listRef}>
+          {sections.map((section) => (
+            <li key={section.id} className={`item-group ${section.id}`}>
+              <SectionHeader section={section} canEdit={canEdit} />
+              <ul className="items-list">
+                {section.items.map((item) => (
+                  <InventoryItemRow
+                    key={item.id}
+                    section={section}
+                    item={item}
+                    canEdit={canEdit}
+                    stashActorId={stashActorId}
+                    onItemsChanged={onItemsChanged}
+                    isExpanded={expandedItemIds.has(item.id)}
+                    onToggleExpanded={toggleExpanded}
+                  />
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
     </StashInventoryRoot>
   );
 }

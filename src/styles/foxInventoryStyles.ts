@@ -2,7 +2,7 @@ import { createGlobalStyle } from "styled-components";
 
 /** Mirrors fox-4e-styling PC inventory list rules for the party stash panel. */
 export const FoxInventoryStyles = createGlobalStyle`
-  .application.dnd4e-party-sheet.sheet.fox4e .party-fox-inventory-host section.tabs-content {
+  .application.dnd4e-party-sheet.sheet.fox4e .party-fox-inventory-host .tab.inventory {
     overflow-x: hidden;
     padding-right: 0.25em;
     padding-top: 0.25em;
@@ -172,11 +172,181 @@ export const FoxInventoryStyles = createGlobalStyle`
       box-sizing: border-box;
     }
 
-    .party-fox-inventory-host .flexrow {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      align-items: center;
+    .item-list.gear .item-name.rollable h4 {
+      cursor: url("/modules/fox-4e-styling/images/cursor_view.svg"), auto;
+    }
+
+    .item-list.gear .item.collapsible .item-header .item-detail {
+      cursor: url("/modules/fox-4e-styling/images/cursor_view.svg"), auto;
+    }
+
+    .item-list.gear .item-image.roll-d20 {
+      cursor: url("/modules/fox-4e-styling/images/cursor_roll-d20.svg"), auto;
+    }
+
+    .item-list.gear .item-summary {
+      table {
+        border: unset;
+        color: #000;
+
+        :is(td, th) {
+          padding: 2px 5px;
+        }
+
+        &:not(.power, .item, .hazard, .monster) thead {
+          background: #193d5e;
+          color: #fff;
+        }
+
+        &:not(.power, .item, .hazard, .monster) tr:not(:first-child) {
+          border-top: 1px solid #fff;
+        }
+
+        &:not(.power, .item, .hazard, .monster) tr:not(:last-child) {
+          border-bottom: 1px solid #fff;
+        }
+
+        &:not(.power, .item, .hazard, .monster) tbody:not(:first-child) tr {
+          border-top: 1px solid #fff;
+          border-bottom: 1px solid #fff;
+        }
+
+        &:not(.power, .item, .hazard, .monster) td {
+          border: none;
+        }
+
+        &:not(.power, .item, .hazard, .monster) tr:nth-child(odd) {
+          background: var(--background-row-odd, #d3d1ba);
+        }
+
+        &:not(.power, .item, .hazard, .monster) tr:nth-child(even) {
+          background: var(--background-row-even, #dddcdb);
+        }
+
+        &:not(.power, .item, .hazard, .monster) tfoot {
+          font-size: 0.85em;
+        }
+      }
+    }
+
+    .item-list.gear .item-card .item-summary .card-content {
+      background: var(--gradient-4e);
+
+      p {
+        padding: 0.1em 0.3em;
+      }
+
+      :is(h1, h2, h3, h4, h5) {
+        font-family: "DragonBodySans", system-ui, sans-serif;
+        margin: 0;
+        padding: 0.1em 0.3em;
+        font-weight: 500;
+        color: #000;
+      }
+
+      .flavour-text,
+      .chat-flavour,
+      .flavour {
+        font-style: oblique;
+      }
+
+      .indent {
+        padding: 0.1em 0.3em 0.1em 1em;
+      }
+
+      table:not(.power, .item, .hazard, .monster) {
+        margin: 0.5em 0;
+        border: 0.3em solid rgba(255, 255, 255, 0);
+      }
+
+      :is(ul, ol) {
+        padding: 0 0 0 2em;
+
+        li {
+          margin-bottom: 0.1em;
+        }
+      }
+
+      ul {
+        list-style-type: none;
+        position: relative;
+
+        li::before {
+          display: block;
+          margin-left: -1em;
+          margin-right: 0.4em;
+          font-size: 1em;
+          content: "\\2726";
+          position: absolute;
+          color: inherit;
+        }
+      }
+
+      a.content-link,
+      a.inline-roll {
+        border: 0;
+        background: 0;
+        padding: 0;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-indent: 0;
+        white-space: initial;
+        word-break: initial;
+        color: #5d1232;
+      }
+
+      a.inline-roll {
+        font-weight: 700;
+      }
+
+      a.inline-result i {
+        display: none;
+      }
+
+      a.inline-roll i {
+        text-indent: 0;
+        margin-right: 1px;
+      }
+    }
+
+    .item-list.gear .item-card:is(.weapon-card, .equipment-card, .consumable-card, .tool-card, .backpack-card)
+      .item-summary
+      .card-content {
+      background: #f6e8d3;
+
+      .flavour {
+        background: var(--gradient-4e-item, linear-gradient(90deg, #eed4ad 0%, #fff 100%));
+      }
+
+      p.subheading,
+      .item-details > span,
+      hr + p:not(.flavour) {
+        background: #eccc9a;
+      }
+
+      p.basics + p.basics {
+        padding-top: 0;
+      }
+
+      .ac-scale {
+        background: #f6e8d3;
+        columns: 3;
+      }
+
+      .ac-scale p.base-ac {
+        flex-basis: calc(100% / 3 - 0.3em);
+        background: unset;
+      }
+
+      .base-ac > strong {
+        display: inline-block;
+        min-width: 3em;
+      }
+
+      p.subheading + p {
+        padding: 0.1em 0.3em 0.1em 1em;
+        text-indent: -0.7em;
+      }
     }
 
     .item-list.gear .item.depleted .item-header > * {

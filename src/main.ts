@@ -7,12 +7,14 @@ import { getPartyFolder, ensureStashActor, syncPartyStashOwnership } from "./par
 import { isStashActor, registerStashActorHooks, relocateAllStashActors } from "./party/stash-actor.js";
 import { registerStashActorSheetDropHook } from "./party/stash-sheet-drop-hook.js";
 import { registerActorSheetTabHook } from "./party/open-actor-sheet.js";
+import { registerActorInventoryRowClickHook } from "./party/actor-inventory-row-click.js";
 
 Hooks.once("init", () => {
   registerSettings();
   registerPartyFolderHooks();
   registerStashActorHooks();
   registerActorSheetTabHook();
+  registerActorInventoryRowClickHook();
 });
 
 Hooks.once("ready", async () => {

@@ -24,14 +24,14 @@ export function useStashDragDrop(
       },
       callbacks: {
         dragstart: (event: DragEvent) => {
-          const li = (event.currentTarget as HTMLElement)?.closest(".item.gear");
-          const itemId = li?.getAttribute("data-item-id");
+          const li = (event.currentTarget as HTMLElement)?.closest("li.item.gear");
+          const itemId = li?.dataset.itemId;
           const item = itemId ? stashActor.items.get(itemId) : null;
           if (!item) return;
           const dragData =
-            typeof (item as { toDragData?: () => object }).toDragData === "function"
-              ? (item as { toDragData: () => object }).toDragData()
-              : { type: "Item", uuid: (item as { uuid?: string }).uuid };
+            typeof item.toDragData === "function"
+              ? item.toDragData()
+              : { type: "Item", uuid: item.uuid };
           event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
         },
         dragover: (event: DragEvent) => {

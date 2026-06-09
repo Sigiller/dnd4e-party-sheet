@@ -134,8 +134,21 @@ export const StashTabPanel = styled.div.attrs({ className: "party-stash-tab flex
   color: ${({ theme }) => theme.colourTextOnLight};
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   gap: ${({ theme }) => theme.spacingGutter};
   align-items: flex-start;
+
+  /* fox-4e-styling sets .flexrow > * { flex: unset } on all .sheet.fox4e apps */
+  > .party-overview-sidebar {
+    flex: 0 0 200px;
+    width: 200px;
+    max-width: 200px;
+  }
+
+  > .party-stash-main {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 `;
 
 export const OverviewSubSection = styled.section`

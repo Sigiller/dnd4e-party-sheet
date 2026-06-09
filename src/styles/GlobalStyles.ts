@@ -4,6 +4,7 @@ import { partySheetTheme as t } from "./theme.js";
 export const GlobalStyles = createGlobalStyle`
   .application.dnd4e-party-sheet.sheet.fox4e {
     --gradient-4e: ${t.gradient4e};
+    --gradient-4e-item: linear-gradient(90deg, #eed4ad 0%, #fff 100%);
     --background-row-odd: ${t.backgroundRowOdd};
     --background-row-even: ${t.backgroundRowEven};
     --background-panel: ${t.backgroundPanel};

@@ -49,7 +49,7 @@ export class PartySheetApp extends ApplicationV2 {
     if (!ctx) throw new Error("Party folder not found");
 
     const snapshot = await buildPartySnapshot(ctx.folder.id);
-    const inventory = prepareInventorySections(ctx.stashActor);
+    const inventory = await prepareInventorySections(ctx.stashActor);
     const stashLoad = computeStashLoad(ctx.stashActor);
     const stashGp = currencyToGp((ctx.stashActor.system?.currency as Record<string, number>) ?? {});
     const membersGp = snapshot.members.reduce((s, m) => s + m.gp, 0);

@@ -23,9 +23,14 @@ export interface InventoryRow {
   level: number | null;
   price: number | string | null;
   slotLabel: string;
+  descriptionHtml: string;
 }
 
-export function prepareInventorySections(actor: Actor): InventorySection[] {
+type ItemWithChatData = Item & {
+  getChatData?: (htmlOptions?: object) => Promise<{ description?: { value?: string } }>;
+};
+
+export async function prepareInventorySections(actor: Actor): Promise<InventorySection[]> {
   const inventoryTypes = CONFIG.DND4E.inventoryTypes;
   const sections: Record<string, InventorySection> = {};
 
@@ -40,9 +45,12 @@ export function prepareInventorySections(actor: Actor): InventorySection[] {
 
   const topLevel = actor.items.filter((item) => !item.system?.container);
 
+  const actorWithOwner = actor as Actor & { isOwner?: boolean };
+  const htmlOptions = { secrets: actorWithOwner.isOwner ?? false, relativeTo: actor };
+
   for (const item of topLevel) {
     if (!Object.keys(inventoryTypes).includes(item.type)) continue;
-    sections[item.type]?.items.push(itemToRow(item));
+    sections[item.type]?.items.push(await itemToRow(item, htmlOptions));
   }
 
   for (const section of Object.values(sections)) {
@@ -52,7 +60,17 @@ export function prepareInventorySections(actor: Actor): InventorySection[] {
   return Object.keys(inventoryTypes).map((key) => sections[key]!);
 }
 
-function itemToRow(item: Item): InventoryRow {
+async function itemToRow(
+  item: Item,
+  htmlOptions: { secrets: boolean; relativeTo: Actor }
+): Promise<InventoryRow> {
+  let descriptionHtml = "";
+  const getChatData = (item as ItemWithChatData).getChatData;
+  if (typeof getChatData === "function") {
+    const chatData = await getChatData.call(item, htmlOptions);
+    descriptionHtml = chatData?.description?.value ?? "";
+  }
+
   const qty = Number(item.system?.quantity) || 0;
   const weight = Number(item.totalWeight ?? item.system?.weight ?? 0);
   const uses = item.system?.uses as { value?: number; per?: string } | undefined;
@@ -77,6 +95,7 @@ function itemToRow(item: Item): InventoryRow {
     level: levelRaw != null && levelRaw !== "" ? Number(levelRaw) : null,
     price: item.system?.price ?? null,
     slotLabel: formatItemSlot(item),
+    descriptionHtml,
   };
 }
 
