@@ -1,4 +1,5 @@
 import { MODULE_ID } from "../../../constants.js";
+import { localize as loc } from "../../../i18n.js";
 import type { MemberSummary } from "../../../party/party-data.js";
 import { DND4E_ACTOR_INVENTORY_TAB } from "../../../party/open-actor-sheet.js";
 import { formatGp, formatPartyTotalGp } from "../../../party/wealth.js";
@@ -24,7 +25,7 @@ export function PartyOverviewSidebar({
   stashLoad,
   members,
 }: PartyOverviewSidebarProps) {
-  const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
+  const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   return (
     <Sidebar>

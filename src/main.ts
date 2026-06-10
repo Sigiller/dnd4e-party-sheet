@@ -24,7 +24,7 @@ Hooks.once("ready", async () => {
     );
     return;
   }
-  const mod = game.modules.get(MODULE_ID);
+  const mod = game.modules?.get(MODULE_ID);
   if (mod) {
     mod.api = {
       openPartySheet: openPartySheetFromApi,
@@ -49,34 +49,32 @@ Hooks.on("userConnected", () => {
   scheduleStashOwnershipSync();
 });
 
-Hooks.on("updateUser", (_user, changes) => {
+Hooks.on("updateUser", (_user: User.Implementation, changes: object) => {
   if (!game.user?.isGM) return;
   if ("active" in changes || "role" in changes) {
     scheduleStashOwnershipSync();
   }
 });
 
-function shouldRefreshPartySheet(doc: Actor | Item): boolean {
-  const docName = (doc as { documentName?: string }).documentName;
-  if (docName === "Actor") {
-    const actor = doc as Actor;
-    return isPartyMember(actor) || isStashActor(actor);
+function shouldRefreshPartySheet(doc: Actor.Implementation | Item.Implementation): boolean {
+  if (doc.documentName === "Actor") {
+    return isPartyMember(doc) || isStashActor(doc);
   }
-  if (docName === "Item") {
-    const actor = (doc as Item).actor ?? undefined;
+  if (doc.documentName === "Item") {
+    const actor = doc.actor ?? undefined;
     return !!actor && (isPartyMember(actor) || isStashActor(actor));
   }
   return false;
 }
 
-Hooks.on("updateActor", (doc: Actor) => {
+Hooks.on("updateActor", (doc: Actor.Implementation) => {
   if (shouldRefreshPartySheet(doc)) schedulePartySheetRefresh();
 });
 
-Hooks.on("updateItem", (doc: Item) => {
+Hooks.on("updateItem", (doc: Item.Implementation) => {
   if (shouldRefreshPartySheet(doc)) schedulePartySheetRefresh();
 });
 
-Hooks.on("deleteItem", (doc: Item) => {
+Hooks.on("deleteItem", (doc: Item.Implementation) => {
   if (shouldRefreshPartySheet(doc)) schedulePartySheetRefresh();
 });

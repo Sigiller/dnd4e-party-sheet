@@ -1,18 +1,18 @@
 import { FLAG_SCOPE, type PartyFolderFlags, type StashActorFlags } from "../constants.js";
+import { localize } from "../i18n.js";
+import { getGameActors, requireActorId } from "../types/dnd4e.js";
 import { getActorFolderId } from "./party-members.js";
-import type { Actor } from "../foundry-globals.js";
-
-export function isStashActor(actor: Actor): boolean {
+export function isStashActor(actor: Actor.Implementation): boolean {
   return Boolean((actor.flags?.[FLAG_SCOPE] as StashActorFlags | undefined)?.isStash);
 }
 
 /** All stash actor document ids (flags + folder metadata). */
 export function getStashActorIds(): string[] {
   const ids = new Set<string>();
-  for (const actor of game.actors.contents) {
-    if (isStashActor(actor)) ids.add(actor.id);
+  for (const actor of getGameActors()?.contents ?? []) {
+    if (isStashActor(actor)) ids.add(requireActorId(actor));
   }
-  for (const folder of game.folders.filter((f) => f.type === "Actor")) {
+  for (const folder of game.folders?.filter((f) => f.type === "Actor") ?? []) {
     const stashId = (folder.flags[FLAG_SCOPE] as PartyFolderFlags | undefined)?.stashActorId;
     if (stashId) ids.add(stashId);
   }
@@ -39,7 +39,7 @@ export function hideStashActorsInDirectory(root: HTMLElement): void {
 }
 
 /** Stash lives outside the Party folder so it is not listed among party PCs. */
-export async function ensureStashActorUnfoldered(actor: Actor): Promise<void> {
+export async function ensureStashActorUnfoldered(actor: Actor.Implementation): Promise<void> {
   if (!game.user?.isGM) return;
   if (!isStashActor(actor)) return;
   if (getActorFolderId(actor) === null) return;
@@ -48,13 +48,13 @@ export async function ensureStashActorUnfoldered(actor: Actor): Promise<void> {
 
 export async function relocateAllStashActors(): Promise<void> {
   if (!game.user?.isGM) return;
-  for (const actor of game.actors.contents) {
+  for (const actor of getGameActors()?.contents ?? []) {
     if (isStashActor(actor)) await ensureStashActorUnfoldered(actor);
   }
 }
 
 export function registerStashActorHooks(): void {
-  Hooks.on("renderActorDirectory", (_app, html) => {
+  Hooks.on("renderActorDirectory", (_app: unknown, html: unknown) => {
     const root =
       html instanceof HTMLElement
         ? html
@@ -64,10 +64,10 @@ export function registerStashActorHooks(): void {
     if (root) hideStashActorsInDirectory(root);
   });
 
-  Hooks.on("preDeleteActor", (document: Actor) => {
+  Hooks.on("preDeleteActor", (document: Actor.Implementation) => {
     if (!isStashActor(document)) return;
     ui.notifications?.warn(
-      game.i18n.localize("dnd4e-party-sheet.sheet.stash.deleteBlocked"),
+      localize("dnd4e-party-sheet.sheet.stash.deleteBlocked"),
       { localize: false }
     );
     return false;

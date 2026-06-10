@@ -1,32 +1,43 @@
 import { MODULE_ID } from "../constants.js";
-import type { Actor, Item } from "../foundry-globals.js";
+import { localize } from "../i18n.js";
 import { isStashActor } from "./stash-actor.js";
 
 export type StashDepositSource = "inventory" | "compendium" | "itemsDirectory";
 
 export type DropData = Record<string, unknown>;
 
-type ItemLike = Pick<Item, "uuid"> & { actor?: { id: string } | null };
+type ItemLike = Pick<Item.Implementation, "uuid"> & {
+  actor?: Actor.Implementation | null;
+};
+
+function readDropString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value);
+  }
+  return "";
+}
 
 function dropUuid(data: DropData, item: ItemLike): string {
-  return String(data.uuid ?? item.uuid ?? "");
+  return readDropString(data.uuid) || item.uuid || "";
 }
 
 export function isCompendiumDropData(data: DropData, item?: ItemLike): boolean {
   if (data.pack) return true;
-  const uuid = item ? dropUuid(data, item) : String(data.uuid ?? "");
+  const uuid = item ? dropUuid(data, item) : readDropString(data.uuid);
   return uuid.startsWith("Compendium.");
 }
 
 export function isInventoryDropData(data: DropData): boolean {
-  const uuid = String(data.uuid ?? "");
+  const uuid = readDropString(data.uuid);
   return /^Actor\.[^.]+\.Item\./.test(uuid);
 }
 
 /** Compendium pack collection id, e.g. Compendium.dnd4e.items */
 export function resolveCompendiumPackId(data: DropData, item?: ItemLike): string | null {
-  if (data.pack) return String(data.pack);
-  const uuid = item ? dropUuid(data, item) : String(data.uuid ?? "");
+  if (data.pack) return readDropString(data.pack);
+  const uuid = item ? dropUuid(data, item) : readDropString(data.uuid);
   if (!uuid.startsWith("Compendium.")) return null;
   const rest = uuid.slice("Compendium.".length);
   const parts = rest.split(".");
@@ -36,7 +47,7 @@ export function resolveCompendiumPackId(data: DropData, item?: ItemLike): string
   return `Compendium.${rest}`;
 }
 
-export type CompendiumPackLike = { collection: string; title: string };
+export interface CompendiumPackLike { collection: string; title: string }
 
 /** Resolve human-readable compendium name from pack/collection id. */
 export function resolveCompendiumPackTitle(
@@ -77,7 +88,7 @@ export function classifyDepositSource(data: DropData, item: ItemLike): StashDepo
     return "compendium";
   }
 
-  const actor = item.actor as Actor | null | undefined;
+  const actor = item.actor;
   if (actor?.id && !isStashActor(actor)) {
     return "inventory";
   }
@@ -95,8 +106,7 @@ export function getExternalSourceLabel(data: DropData, item?: ItemLike): string 
     const packs = game.packs?.contents as CompendiumPackLike[] | undefined;
     const title = resolveCompendiumPackTitle(packId, packs);
     if (title) return title;
-    // Last resort: strip Compendium. prefix for readability
     return packId.startsWith("Compendium.") ? packId.slice("Compendium.".length) : packId;
   }
-  return game.i18n.localize(`${MODULE_ID}.sheet.stash.chatLog.itemsDirectory`);
+  return localize(`${MODULE_ID}.sheet.stash.chatLog.itemsDirectory`);
 }

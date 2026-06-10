@@ -2,23 +2,31 @@ import { MODULE_ID } from "../constants.js";
 import { getPartyFolder, resolvePartyContext } from "../party/party-store.js";
 import { getPartyFolderName } from "../settings.js";
 import { openPartySheet } from "../app/PartySheetApp.js";
+import { formatMessage, localize } from "../i18n.js";
 
 const SHEET_BUTTON_CLASS = "party-sheet-folder-btn";
 
-type DirectoryApp = {
+interface DirectoryApp {
   element?: HTMLElement;
   rendered?: boolean;
   render?: (force?: boolean) => Promise<unknown>;
-};
+}
+
+interface SidebarWithTabs {
+  tabs?: {
+    actors?: DirectoryApp;
+  };
+}
 
 export function registerPartyFolderHooks(): void {
-  Hooks.on("renderActorDirectory", (app, html) => {
+  Hooks.on("renderActorDirectory", (app: unknown, html: unknown) => {
     injectPartySheetUi(app as DirectoryApp, html);
   });
 
   Hooks.on("updateFolder", () => {
-    const dir = ui.sidebar?.tabs?.actors as DirectoryApp | undefined;
-    if (dir?.rendered) dir.render?.(false);
+    const sidebar = ui.sidebar as SidebarWithTabs | undefined;
+    const dir = sidebar?.tabs?.actors;
+    if (dir?.rendered) void dir.render?.(false);
   });
 }
 
@@ -48,7 +56,7 @@ function injectPartySheetUi(app: DirectoryApp, html: unknown): void {
 /** Icon on the Party folder row. */
 function injectFolderIcon(root: HTMLElement): void {
   const folder = getPartyFolder();
-  if (!folder) return;
+  if (!folder?.id) return;
 
   const row = findPartyFolderRow(root, folder.id);
   if (!row) return;
@@ -62,15 +70,16 @@ function injectFolderIcon(root: HTMLElement): void {
   if (!header) return;
   if (header.querySelector(`.${SHEET_BUTTON_CLASS}`)) return;
 
+  const openTitle = localize(`${MODULE_ID}.sheet.openSheet`);
   const btn = document.createElement("a");
   btn.className = `${SHEET_BUTTON_CLASS} party-sheet-open`;
-  btn.title = game.i18n.localize(`${MODULE_ID}.sheet.openSheet`);
-  btn.setAttribute("data-tooltip", game.i18n.localize(`${MODULE_ID}.sheet.openSheet`));
+  btn.title = openTitle;
+  btn.setAttribute("data-tooltip", openTitle);
   btn.innerHTML = '<i class="fas fa-scroll"></i>';
   btn.addEventListener("click", (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
-    void openPartySheet(folder.id);
+    void openPartySheet(folder.id ?? undefined);
   });
 
   header.appendChild(btn);
@@ -80,9 +89,9 @@ export async function openPartySheetFromApi(folderId?: string): Promise<void> {
   const ctx = await resolvePartyContext(folderId);
   if (!ctx) {
     ui.notifications?.warn(
-      game.i18n.format(`${MODULE_ID}.sheet.noPartyFolder`, { name: getPartyFolderName() })
+      formatMessage(`${MODULE_ID}.sheet.noPartyFolder`, { name: getPartyFolderName() })
     );
     return;
   }
-  await openPartySheet(ctx.folder.id);
+  await openPartySheet(ctx.folder.id ?? folderId);
 }

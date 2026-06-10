@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MODULE_ID } from "../../../constants.js";
+import { localize as loc } from "../../../i18n.js";
 import type { PartySnapshot } from "../../../party/party-data.js";
 import { PartyLanguages } from "../languages/PartyLanguages.js";
 import { PartySkills } from "../skills/PartySkills.js";
@@ -23,7 +24,7 @@ type SkillsMode = "compact" | "detailed";
 export function PartySkillsLanguagesSection({ snapshot }: PartySkillsLanguagesSectionProps) {
   const [subTab, setSubTab] = useState<SubTabId>("skills");
   const [skillsMode, setSkillsMode] = useState<SkillsMode>("compact");
-  const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
+  const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   const toggleSkillsMode = () => {
     setSubTab("skills");

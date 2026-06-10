@@ -1,6 +1,7 @@
 import { useEffect, type RefObject } from "react";
 import { handleStashDrop } from "../../../party/stash-drop.js";
 import { isInventoryDropData } from "../../../party/stash-deposit-source.js";
+import { getGameActors } from "../../../types/dnd4e.js";
 
 export function useStashDragDrop(
   tabRef: RefObject<HTMLElement | null>,
@@ -12,7 +13,7 @@ export function useStashDragDrop(
     const el = tabRef.current;
     if (!el || !canEdit) return;
 
-    const stashActor = game.actors.get(stashActorId);
+    const stashActor = getGameActors()?.get(stashActorId);
     if (!stashActor) return;
 
     const dragDrop = new foundry.applications.ux.DragDrop({
@@ -25,7 +26,8 @@ export function useStashDragDrop(
       callbacks: {
         dragstart: (event: DragEvent) => {
           const li = (event.currentTarget as HTMLElement)?.closest("li.item.gear");
-          const itemId = li?.dataset.itemId;
+          const itemId =
+            li instanceof HTMLElement ? li.dataset.itemId : undefined;
           const item = itemId ? stashActor.items.get(itemId) : null;
           if (!item) return;
           const dragData =
@@ -36,9 +38,13 @@ export function useStashDragDrop(
         },
         dragover: (event: DragEvent) => {
           const TextEditor = foundry.applications.ux.TextEditor;
-          const data =
+          const rawData =
             TextEditor.getDragEventData?.(event) ??
             TextEditor.implementation?.getDragEventData?.(event);
+          const data =
+            rawData && typeof rawData === "object"
+              ? (rawData as Record<string, unknown>)
+              : null;
           if (data?.type === "Item") {
             event.preventDefault();
             if (event.dataTransfer) {

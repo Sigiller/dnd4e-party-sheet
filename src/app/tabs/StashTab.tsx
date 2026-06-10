@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { MODULE_ID } from "../../constants.js";
+import { localize as loc } from "../../i18n.js";
 import type { PartySnapshot } from "../../party/party-data.js";
 import type { InventorySection } from "../../party/inventory-prep.js";
 import { PartyOverviewSidebar } from "../components/stash/PartyOverviewSidebar.js";
@@ -27,7 +28,7 @@ interface StashTabProps {
 
 export function StashTab({ snapshot, stash, stashActorId, canEdit, canEditCurrency, onRefresh }: StashTabProps) {
   const tabRef = useRef<HTMLDivElement>(null);
-  const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
+  const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   useStashDragDrop(tabRef, stashActorId, canEdit, onRefresh);
 

@@ -33,7 +33,7 @@ jobs:
           fi
 
       - name: Build module
-        run: npm ci && npm run build
+        run: npm ci && npm run check
 
       - name: Stage module folder and inject manifest URLs
         env:

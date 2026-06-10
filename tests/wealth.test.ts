@@ -38,7 +38,7 @@ function roundGp(gp: number): number {
 function formatGp(gp: number, fixedDecimals?: number): string {
   const value =
     fixedDecimals !== undefined ? roundGp(gp).toFixed(fixedDecimals) : String(gp);
-  const [intPart, fracPart] = value.split(".");
+  const [intPart = value, fracPart] = value.split(".");
   const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return fracPart !== undefined ? `${withSep}.${fracPart}` : withSep;
 }

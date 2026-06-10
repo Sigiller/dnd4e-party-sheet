@@ -1,8 +1,9 @@
 import { MODULE_ID } from "../constants.js";
+import { formatMessage } from "../i18n.js";
 import { isStashChatEnabled } from "../settings.js";
 import { CURRENCY_DISPLAY_ORDER, RITUALCOMP_RS_KEY } from "./currency-display.js";
-import type { Actor, Item } from "../foundry-globals.js";
 import { getCurrencyLabel, type CurrencyDeltas } from "./stash-currency.js";
+import type { StashDepositSource } from "./stash-deposit-source.js";
 
 const CHAT_PREFIX = `${MODULE_ID}.sheet.stash.chatLog`;
 
@@ -11,7 +12,9 @@ export interface ActingContext {
   characterName?: string;
 }
 
-export function getActingContext(characterActor?: Actor | null): ActingContext {
+export function getActingContext(
+  characterActor?: Actor.Implementation | null
+): ActingContext {
   const playerName = game.user?.name ?? "Unknown";
   const characterName = characterActor?.name ?? game.user?.character?.name;
   return {
@@ -60,7 +63,10 @@ async function enrichChatHtml(html: string): Promise<string> {
   return html;
 }
 
-async function postStashChatMessage(html: string, characterActor?: Actor | null): Promise<void> {
+async function postStashChatMessage(
+  html: string,
+  characterActor?: Actor.Implementation | null
+): Promise<void> {
   if (!isStashChatEnabled()) return;
   const user = game.user;
   if (!user) return;
@@ -68,20 +74,24 @@ async function postStashChatMessage(html: string, characterActor?: Actor | null)
   const content = await enrichChatHtml(html);
   await ChatMessage.create({
     user: user.id,
-    speaker: ChatMessage.getSpeaker({ actor: characterActor ?? undefined }),
+    speaker: ChatMessage.getSpeaker(
+      characterActor
+        ? ({ actor: characterActor } as Parameters<typeof ChatMessage.getSpeaker>[0])
+        : {}
+    ),
     content,
   });
 }
 
 export async function logCurrencyAdded(
-  characterActor: Actor | null | undefined,
+  characterActor: Actor.Implementation | null | undefined,
   deltas: CurrencyDeltas
 ): Promise<void> {
   const details = formatCurrencySummary(deltas);
   if (!details) return;
 
   const ctx = getActingContext(characterActor);
-  const html = game.i18n.format(chatKey("currencyAdded", ctx), {
+  const html = formatMessage(chatKey("currencyAdded", ctx), {
     player: ctx.playerName,
     character: ctx.characterName ?? "",
     details,
@@ -90,14 +100,14 @@ export async function logCurrencyAdded(
 }
 
 export async function logCurrencyRemoved(
-  characterActor: Actor | null | undefined,
+  characterActor: Actor.Implementation | null | undefined,
   deltas: CurrencyDeltas
 ): Promise<void> {
   const details = formatCurrencySummary(deltas);
   if (!details) return;
 
   const ctx = getActingContext(characterActor);
-  const html = game.i18n.format(chatKey("currencyRemoved", ctx), {
+  const html = formatMessage(chatKey("currencyRemoved", ctx), {
     player: ctx.playerName,
     character: ctx.characterName ?? "",
     details,
@@ -106,13 +116,13 @@ export async function logCurrencyRemoved(
 }
 
 export async function logCurrencyRemovedByGp(
-  characterActor: Actor | null | undefined,
+  characterActor: Actor.Implementation | null | undefined,
   gpTotal: number
 ): Promise<void> {
   if (gpTotal <= 0) return;
 
   const ctx = getActingContext(characterActor);
-  const html = game.i18n.format(chatKey("currencyRemovedByGp", ctx), {
+  const html = formatMessage(chatKey("currencyRemovedByGp", ctx), {
     player: ctx.playerName,
     character: ctx.characterName ?? "",
     gp: gpTotal,
@@ -121,69 +131,69 @@ export async function logCurrencyRemovedByGp(
 }
 
 export async function logItemDepositedFromInventory(
-  sourceActor: Actor,
-  item: Item,
+  sourceActor: Actor.Implementation,
+  item: Item.Implementation,
   qty: number
 ): Promise<void> {
   const ctx = getActingContext(sourceActor);
-  const html = game.i18n.format(`${CHAT_PREFIX}.itemDepositedFromInventory`, {
+  const html = formatMessage(`${CHAT_PREFIX}.itemDepositedFromInventory`, {
     player: ctx.playerName,
     character: sourceActor.name,
-    item: formatItemLink(item, qty),
+    item: formatItemLink({ uuid: item.uuid ?? undefined, name: item.name }, qty),
   });
   await postStashChatMessage(html, sourceActor);
 }
 
 /** @deprecated Use logItemDepositedFromInventory */
 export async function logItemDeposited(
-  sourceActor: Actor,
-  item: Item,
+  sourceActor: Actor.Implementation,
+  item: Item.Implementation,
   qty: number
 ): Promise<void> {
   return logItemDepositedFromInventory(sourceActor, item, qty);
 }
 
 export async function logItemAddedFromExternal(
-  item: Item,
+  item: Item.Implementation,
   qty: number,
   sourceLabel: string,
-  source: "compendium" | "itemsDirectory"
+  source: Extract<StashDepositSource, "compendium" | "itemsDirectory">
 ): Promise<void> {
   const characterActor = game.user?.character ?? null;
   const ctx = getActingContext(characterActor);
 
   const baseKey =
     source === "compendium" ? "itemAddedFromCompendium" : "itemAddedFromItemsDirectory";
-  const html = game.i18n.format(chatKey(baseKey, ctx), {
+  const html = formatMessage(chatKey(baseKey, ctx), {
     player: ctx.playerName,
     character: ctx.characterName ?? "",
-    item: formatItemLink(item, qty),
+    item: formatItemLink({ uuid: item.uuid ?? undefined, name: item.name }, qty),
     source: sourceLabel,
   });
   await postStashChatMessage(html, characterActor ?? undefined);
 }
 
 export async function logItemWithdrawn(
-  targetActor: Actor,
-  item: Item,
+  targetActor: Actor.Implementation,
+  item: Item.Implementation,
   qty: number
 ): Promise<void> {
   const ctx = getActingContext(targetActor);
-  const html = game.i18n.format(`${CHAT_PREFIX}.itemWithdrawn`, {
+  const html = formatMessage(`${CHAT_PREFIX}.itemWithdrawn`, {
     player: ctx.playerName,
     character: targetActor.name,
-    item: formatItemLink(item, qty),
+    item: formatItemLink({ uuid: item.uuid ?? undefined, name: item.name }, qty),
   });
   await postStashChatMessage(html, targetActor);
 }
 
-export async function logItemDeleted(item: Item): Promise<void> {
+export async function logItemDeleted(item: Item.Implementation): Promise<void> {
   const characterActor = game.user?.character ?? null;
   const ctx = getActingContext(characterActor);
-  const html = game.i18n.format(chatKey("itemDeleted", ctx), {
+  const html = formatMessage(chatKey("itemDeleted", ctx), {
     player: ctx.playerName,
     character: ctx.characterName ?? "",
-    item: formatItemLink(item),
+    item: formatItemLink({ uuid: item.uuid ?? undefined, name: item.name }),
   });
   await postStashChatMessage(html, characterActor ?? undefined);
 }

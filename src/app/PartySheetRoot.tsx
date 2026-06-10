@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { MODULE_ID, type PartyFolderFlags } from "../constants.js";
+import { localize as loc } from "../i18n.js";
 import type { PartySnapshot } from "../party/party-data.js";
 import type { InventorySection } from "../party/inventory-prep.js";
 import { OverviewTab } from "./tabs/OverviewTab.js";
@@ -36,7 +37,7 @@ type TabId = "overview" | "stash";
 
 export function PartySheetRoot(props: PartySheetProps) {
   const [tab, setTab] = useState<TabId>("overview");
-  const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
+  const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   const onEmblemPick = useCallback(async () => {
     const fp = new foundry.applications.apps.FilePicker({

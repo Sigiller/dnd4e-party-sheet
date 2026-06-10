@@ -1,5 +1,5 @@
 import { MODULE_ID } from "../constants.js";
-import type { Actor } from "../foundry-globals.js";
+import { localize } from "../i18n.js";
 import {
   CURRENCY_DISPLAY_ORDER,
   RITUALCOMP_RS_KEY,
@@ -10,15 +10,17 @@ import {
   parseCurrencyDeltas,
   subtractStashCurrencyByGp,
   subtractStashCurrencyExact,
+  type CurrencyDeltas,
   type CurrencyRecord,
 } from "./stash-currency.js";
+import { readRitualcomp, readStashCurrency } from "../types/dnd4e.js";
 import { canEditStashCurrency } from "./stash-permissions.js";
 
 const COIN_KEYS = [...CURRENCY_DISPLAY_ORDER] as string[];
 const ALL_KEYS = [...COIN_KEYS, RITUALCOMP_RS_KEY];
 
 function loc(key: string): string {
-  return game.i18n.localize(`${MODULE_ID}.sheet.stash.currency.${key}`);
+  return localize(`${MODULE_ID}.sheet.stash.currency.${key}`);
 }
 
 function buildRowHtml(key: string, inputName: string, hidden = false): string {
@@ -143,14 +145,14 @@ function wireSubtractDialogListeners(start: unknown): void {
   syncResiduumVisibility(root);
 }
 
-export async function promptAddStashCurrency(stashActor: Actor): Promise<boolean> {
+export async function promptAddStashCurrency(stashActor: Actor.Implementation): Promise<boolean> {
   if (!canEditStashCurrency(stashActor)) return false;
   const title = loc("addTitle");
   const result = await foundry.applications.api.DialogV2.input({
     window: { title },
     content: buildAddDialogContent(),
     ok: { icon: "fas fa-plus", label: loc("confirm") },
-    cancel: { icon: "fas fa-times", label: game.i18n.localize("Cancel") },
+    cancel: { icon: "fas fa-times", label: localize("Cancel") },
     rejectClose: false,
   });
 
@@ -167,7 +169,7 @@ export async function promptAddStashCurrency(stashActor: Actor): Promise<boolean
   return true;
 }
 
-export async function promptSubtractStashCurrency(stashActor: Actor): Promise<boolean> {
+export async function promptSubtractStashCurrency(stashActor: Actor.Implementation): Promise<boolean> {
   if (!canEditStashCurrency(stashActor)) return false;
   const title = loc("subtractTitle");
   let applied = false;
@@ -178,7 +180,7 @@ export async function promptSubtractStashCurrency(stashActor: Actor): Promise<bo
     ok: {
       icon: "fas fa-check",
       label: loc("confirm"),
-      callback: async (
+      callback: (async (
         _event: SubmitEvent,
         button: HTMLButtonElement,
         dialog?: { element?: HTMLElement }
@@ -210,25 +212,25 @@ export async function promptSubtractStashCurrency(stashActor: Actor): Promise<bo
         }
         applied = true;
         return true;
-      },
+      }) as never,
     },
-    cancel: { icon: "fas fa-times", label: game.i18n.localize("Cancel") },
+    cancel: { icon: "fas fa-times", label: localize("Cancel") },
     rejectClose: false,
-    render: (_event: unknown, html: HTMLElement) => {
+    render: ((_event: unknown, html: HTMLElement) => {
       wireSubtractDialogListeners(html);
       queueMicrotask(() => wireSubtractDialogListeners(html));
-    },
+    }) as never,
   });
 
   return applied;
 }
 
-export function readStashCurrencyFromActor(stashActor: Actor): {
+export function readStashCurrencyFromActor(stashActor: Actor.Implementation): {
   currency: CurrencyRecord;
   ritualcomp: CurrencyRecord;
 } {
   return {
-    currency: (stashActor.system?.currency ?? {}) as CurrencyRecord,
-    ritualcomp: (stashActor.system?.ritualcomp ?? {}) as CurrencyRecord,
+    currency: readStashCurrency(stashActor),
+    ritualcomp: readRitualcomp(stashActor),
   };
 }

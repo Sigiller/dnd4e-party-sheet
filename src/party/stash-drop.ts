@@ -1,4 +1,3 @@
-import type { Actor, Item } from "../foundry-globals.js";
 import {
   classifyDepositSource,
   getExternalSourceLabel,
@@ -19,15 +18,12 @@ function isItemDrop(data: Record<string, unknown>): boolean {
 
 export async function handleStashDrop(
   event: DragEvent,
-  stashActor: Actor
+  stashActor: Actor.Implementation
 ): Promise<boolean> {
   const data = getDropData(event);
   if (!data || !isItemDrop(data)) return false;
 
-  const ItemClass = Item.implementation as typeof Item & {
-    fromDropData: (data: object) => Promise<Item | null>;
-  };
-  const item = await ItemClass.fromDropData(data);
+  const item = await Item.implementation.fromDropData(data);
   if (!item) return false;
 
   const source = classifyDepositSource(data, item);

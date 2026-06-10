@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 function collectLanguagesMock(
   actors: { name: string; languages: { value?: string[]; custom?: string } }[],
   config: Record<string, string>,
-  kind: "spoken" | "script"
+  _kind: "spoken" | "script"
 ): { key: string; label: string; owners: string[] }[] {
   const map = new Map<string, { label: string; owners: Set<string> }>();
 
@@ -81,6 +81,6 @@ describe("party languages aggregation", () => {
       "spoken"
     );
     assert.equal(result.length, 1);
-    assert.equal(result[0].label, "Giant (2)");
+    assert.equal(result[0]?.label, "Giant (2)");
   });
 });

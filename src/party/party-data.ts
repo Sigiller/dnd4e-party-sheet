@@ -1,7 +1,13 @@
 import { TRAINING_TRAINED } from "../constants.js";
 import { getPartyMembers } from "./party-members.js";
 import { currencyToGp } from "./wealth.js";
-import type { Actor } from "../foundry-globals.js";
+import {
+  type ActorWithLegacyEffects,
+  getDnd4eSystem,
+  readActorLevel,
+  requireActorId,
+} from "../types/dnd4e.js";
+import { localize } from "../i18n.js";
 
 export interface PartySkillCompact {
   key: string;
@@ -45,15 +51,15 @@ export interface PartySnapshot {
   languages: { spoken: LanguageEntry[]; script: LanguageEntry[] };
 }
 
-function detailsLine(actor: Actor): string {
-  const d = actor.system?.details as Record<string, string> | undefined;
+function detailsLine(actor: Actor.Implementation): string {
+  const d = getDnd4eSystem(actor).details;
   if (!d) return "";
   const parts = [d.race, d.class, d.paragon, d.epic].filter((p) => p && String(p).trim());
   return parts.join(" / ");
 }
 
-function getSenseLabels(actor: Actor): string[] {
-  const senses = actor.system?.senses as { special?: { value?: string[]; custom?: string } } | undefined;
+function getSenseLabels(actor: Actor.Implementation): string[] {
+  const senses = getDnd4eSystem(actor).senses;
   const special = senses?.special;
   if (!special) return [];
   const config = CONFIG.DND4E.special;
@@ -61,7 +67,7 @@ function getSenseLabels(actor: Actor): string[] {
   const labels: string[] = [];
   for (const key of values) {
     const label = config[key];
-    if (label) labels.push(game.i18n.localize(label));
+    if (label) labels.push(localize(label));
   }
   if (special.custom) {
     special.custom.split(";").forEach((c) => {
@@ -72,13 +78,19 @@ function getSenseLabels(actor: Actor): string[] {
   return labels;
 }
 
-async function getEffectIcons(actor: Actor): Promise<{ name: string; img: string }[]> {
+async function getEffectIcons(
+  actor: Actor.Implementation
+): Promise<{ name: string; img: string }[]> {
+  const legacy = actor as ActorWithLegacyEffects;
   let effects: { name: string; img: string }[] = [];
-  if (typeof actor.allApplicableEffects === "function") {
-    const list = await actor.allApplicableEffects();
-    effects = list.map((e) => ({ name: e.name, img: e.img || "icons/svg/aura.svg" }));
-  } else if (typeof actor.getActiveEffects === "function") {
-    effects = actor.getActiveEffects().map((e) => ({
+  if (typeof legacy.allApplicableEffects === "function") {
+    const list = await legacy.allApplicableEffects();
+    effects = Array.from(list as Iterable<{ name: string; img: string }>).map((e) => ({
+      name: e.name,
+      img: e.img || "icons/svg/aura.svg",
+    }));
+  } else if (typeof legacy.getActiveEffects === "function") {
+    effects = legacy.getActiveEffects().map((e: { name: string; img: string }) => ({
       name: e.name,
       img: e.img || "icons/svg/aura.svg",
     }));
@@ -86,8 +98,11 @@ async function getEffectIcons(actor: Actor): Promise<{ name: string; img: string
   return effects;
 }
 
-function buildMember(actor: Actor, effects: { name: string; img: string }[]): MemberSummary {
-  const sys = actor.system ?? {};
+function buildMember(
+  actor: Actor.Implementation,
+  effects: { name: string; img: string }[]
+): MemberSummary {
+  const sys = getDnd4eSystem(actor);
   const attrs = sys.attributes as { hp?: { value: number; max: number } } | undefined;
   const details = sys.details as { surges?: { value: number; max: number } } | undefined;
   const defences = sys.defences as Record<string, { value: number }> | undefined;
@@ -98,19 +113,17 @@ function buildMember(actor: Actor, effects: { name: string; img: string }[]): Me
   if (skills) {
     for (const [key, sk] of Object.entries(skills)) {
       if ((sk.training ?? 0) < TRAINING_TRAINED) continue;
-      const label =
-        sk.label ?? CONFIG.DND4E.skills[key]?.label
-          ? game.i18n.localize(CONFIG.DND4E.skills[key].label!)
-          : key;
+      const skillLabel = CONFIG.DND4E.skills[key]?.label;
+      const label = sk.label ?? (skillLabel ? localize(skillLabel) : key);
       trainedSkills.push({ key, label, total: Number(sk.total) || 0 });
     }
     trainedSkills.sort((a, b) => a.label.localeCompare(b.label));
   }
 
   return {
-    id: actor.id,
+    id: requireActorId(actor),
     name: actor.name,
-    img: actor.img,
+    img: String(actor.img ?? ""),
     hp: {
       value: attrs?.hp?.value ?? 0,
       max: attrs?.hp?.max ?? 0,
@@ -129,21 +142,21 @@ function buildMember(actor: Actor, effects: { name: string; img: string }[]): Me
     senses: getSenseLabels(actor),
     effects,
     trainedSkills,
-    gp: currencyToGp((sys.currency as Record<string, number>) ?? {}),
+    gp: currencyToGp(sys.currency ?? {}),
     load: { value: enc?.value ?? 0, max: enc?.max ?? 0 },
   };
 }
 
-type LanguageTrait = {
+interface LanguageTrait {
   value?: Iterable<string> | string[] | string;
   custom?: string;
-};
+}
 
 function languageTraitKeys(trait: LanguageTrait | undefined): string[] {
   if (!trait?.value) return [];
   const raw = trait.value;
-  if (raw instanceof Set) return [...raw];
-  if (Array.isArray(raw)) return raw;
+  if (raw instanceof Set) return [...raw].map(String);
+  if (Array.isArray(raw)) return raw.map(String);
   if (typeof raw === "string") return [raw];
   return [...raw];
 }
@@ -157,7 +170,10 @@ function languageTraitCustom(trait: LanguageTrait | undefined): string[] {
     .filter(Boolean);
 }
 
-function collectLanguages(actors: Actor[], kind: "spoken" | "script"): LanguageEntry[] {
+function collectLanguages(
+  actors: Actor.Implementation[],
+  kind: "spoken" | "script"
+): LanguageEntry[] {
   const config = kind === "spoken" ? CONFIG.DND4E.spoken : CONFIG.DND4E.script;
   const map = new Map<string, { label: string; owners: Set<string> }>();
 
@@ -171,12 +187,12 @@ function collectLanguages(actors: Actor[], kind: "spoken" | "script"): LanguageE
   };
 
   for (const actor of actors) {
-    const lang = actor.system?.languages as Record<string, LanguageTrait> | undefined;
+    const lang = getDnd4eSystem(actor).languages;
     const trait = lang?.[kind];
     if (!trait) continue;
 
     for (const key of languageTraitKeys(trait)) {
-      const label = config[key] ? game.i18n.localize(config[key]) : key;
+      const label = config[key] ? localize(config[key]) : key;
       add(key, label, actor.name);
     }
 
@@ -199,13 +215,13 @@ function collectLanguages(actors: Actor[], kind: "spoken" | "script"): LanguageE
     .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
 }
 
-function buildSkills(actors: Actor[]): {
+function buildSkills(actors: Actor.Implementation[]): {
   compact: PartySkillCompact[];
   detailed: PartySkillDetailed[];
 } {
   const skillKeys = new Set<string>();
   for (const actor of actors) {
-    const skills = actor.system?.skills as Record<string, unknown> | undefined;
+    const skills = getDnd4eSystem(actor).skills;
     if (skills) Object.keys(skills).forEach((k) => skillKeys.add(k));
   }
 
@@ -218,19 +234,19 @@ function buildSkills(actors: Actor[]): {
     const configLabel = CONFIG.DND4E.skills[key]?.label;
 
     for (const actor of actors) {
-      const sk = (actor.system?.skills as Record<string, { total?: number; label?: string }>)?.[key];
+      const sk = getDnd4eSystem(actor).skills?.[key];
       const bonus = Number(sk?.total) || 0;
-      entries.push({ memberId: actor.id, memberName: actor.name, bonus });
+      entries.push({ memberId: requireActorId(actor), memberName: actor.name, bonus });
       if (bonus > maxBonus) maxBonus = bonus;
     }
 
     const sample = actors
-      .map((a) => (a.system?.skills as Record<string, { label?: string }>)?.[key]?.label)
+      .map((a) => getDnd4eSystem(a).skills?.[key]?.label)
       .find(Boolean);
     const label = sample
-      ? game.i18n.localize(sample)
+      ? localize(sample)
       : configLabel
-        ? game.i18n.localize(configLabel)
+        ? localize(configLabel)
         : key;
 
     const owners = entries.filter((e) => e.bonus === maxBonus).map((e) => e.memberName);
@@ -253,9 +269,7 @@ export async function buildPartySnapshot(partyFolderId: string): Promise<PartySn
     members.push(buildMember(actor, effects));
   }
 
-  const levels = actors.map(
-    (a) => Number((a.system?.details as { level?: number })?.level) || 1
-  );
+  const levels = actors.map((a) => readActorLevel(a));
   const partyLevel =
     levels.length > 0
       ? Math.floor(levels.reduce((s, l) => s + l, 0) / levels.length)

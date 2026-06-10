@@ -1,4 +1,5 @@
 import { MODULE_ID } from "../../../constants.js";
+import { localize as loc } from "../../../i18n.js";
 import type { LanguageEntry } from "../../../party/party-data.js";
 import { LanguageGroup, LanguageList, LanguagesBlock } from "./PartyLanguages.styles.js";
 
@@ -22,7 +23,7 @@ function LanguageListSection({ title, entries }: { title: string; entries: Langu
 }
 
 export function PartyLanguages({ languages }: PartyLanguagesProps) {
-  const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
+  const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   return (
     <LanguagesBlock>

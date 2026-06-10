@@ -24,7 +24,7 @@ export function formatGp(gp: number, fixedDecimals?: number): string {
       ? roundGp(gp).toFixed(fixedDecimals)
       : String(gp);
   const [intPart, fracPart] = value.split(".");
-  const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const withSep = (intPart ?? "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return fracPart !== undefined ? `${withSep}.${fracPart}` : withSep;
 }
 

@@ -1,5 +1,7 @@
 import { Fragment } from "react";
 import { MODULE_ID } from "../../../constants.js";
+import { localize } from "../../../i18n.js";
+import { getGameActors } from "../../../types/dnd4e.js";
 import { CURRENCY_ICONS } from "../../../party/currency-display.js";
 import { getStashCurrencyRows } from "../../../party/stash-currency.js";
 import {
@@ -37,17 +39,17 @@ export function PartyStashCurrency({
   onChanged,
 }: PartyStashCurrencyProps) {
   const rows = getStashCurrencyRows(currency, ritualcomp);
-  const loc = (key: string) => game.i18n.localize(`${MODULE_ID}.sheet.stash.currency.${key}`);
+  const loc = (key: string) => localize(`${MODULE_ID}.sheet.stash.currency.${key}`);
 
   const handleAdd = async () => {
-    const actor = game.actors.get(stashActorId);
+    const actor = getGameActors()?.get(stashActorId);
     if (!actor) return;
     const ok = await promptAddStashCurrency(actor);
     if (ok) onChanged();
   };
 
   const handleSubtract = async () => {
-    const actor = game.actors.get(stashActorId);
+    const actor = getGameActors()?.get(stashActorId);
     if (!actor) return;
     const ok = await promptSubtractStashCurrency(actor);
     if (ok) onChanged();

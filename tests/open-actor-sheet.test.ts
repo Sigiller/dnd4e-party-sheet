@@ -8,20 +8,26 @@ import {
   openActorInventorySheet,
   openActorSheet,
   resolveInventoryTabGroup,
+  type ActorSheetRenderOptions,
+  type SheetLike,
 } from "../src/party/open-actor-sheet.js";
 
-type MockSheet = {
+interface MockSheet {
   rendered: boolean;
   document?: { id: string };
-  element?: { querySelector: (selector: string) => { classList: { contains: (name: string) => boolean } } | null };
-  render: (options?: boolean | { force?: boolean; tab?: Record<string, string> }) => Promise<void>;
+  element?: {
+    querySelector: (
+      selector: string
+    ) => { classList: { contains: (name: string) => boolean } } | null;
+  };
+  render: (options?: boolean | ActorSheetRenderOptions) => Promise<void>;
   bringToFront?: () => void;
   changeTab?: (tab: string, group: string, options?: { force?: boolean }) => void;
   tabGroups?: Record<string, string>;
-};
+}
 
 function installMockActor(actorId: string, sheet: MockSheet): void {
-  (globalThis as { game: { actors: { get: (id: string) => { sheet: MockSheet } | undefined } } }).game =
+  (globalThis as unknown as { game: { actors: { get: (id: string) => { sheet: MockSheet } | undefined } } }).game =
     {
       actors: {
         get: (id: string) => (id === actorId ? { sheet } : undefined),
@@ -36,7 +42,7 @@ describe("openActorSheet", () => {
       rendered: false,
       document: { id: "actor-1" },
       tabGroups: { sheet: "powers" },
-      render: async (options) => {
+      render: async (options?: boolean | ActorSheetRenderOptions) => {
         calls.push(["render", options]);
       },
       changeTab: (tab, group, options) => {
@@ -72,7 +78,7 @@ describe("openActorSheet", () => {
         querySelector: (selector: string) =>
           selector.includes('data-tab="inventory"') ? activePanel : null,
       },
-      render: async (options) => {
+      render: async (options?: boolean | ActorSheetRenderOptions) => {
         calls.push(["render", options]);
       },
       bringToFront: () => {
@@ -89,7 +95,7 @@ describe("openActorSheet", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     assert.deepEqual(calls, [["bringToFront"], ["changeTab", "inventory", "sheet", { force: true }]]);
-    assert.equal(isActorSheetTabActive(sheet, "inventory", "sheet"), true);
+    assert.equal(isActorSheetTabActive(sheet as SheetLike, "inventory", "sheet"), true);
     clearActorSheetTab("actor-2");
   });
 
@@ -98,14 +104,16 @@ describe("openActorSheet", () => {
     const sheet: MockSheet = {
       rendered: true,
       tabGroups: { sheet: "powers" },
-      render: async () => {},
+      render: async () => {
+        void 0;
+      },
       changeTab: (tab, group, options) => {
         calls.push(["changeTab", tab, group, options]);
         sheet.tabGroups = { sheet: tab };
       },
     };
 
-    activateActorSheetTab(sheet, "inventory", "sheet");
+    activateActorSheetTab(sheet as SheetLike, "inventory", "sheet");
 
     assert.deepEqual(calls, [["changeTab", "inventory", "sheet", { force: true }]]);
     assert.equal(sheet.tabGroups?.sheet, "inventory");
@@ -136,7 +144,12 @@ describe("openActorSheet", () => {
   });
 
   it("ignores missing actor", async () => {
-    installMockActor("actor-4", { rendered: false, render: async () => {} });
+    installMockActor("actor-4", {
+      rendered: false,
+      render: async () => {
+        void 0;
+      },
+    });
     await assert.doesNotReject(openActorSheet("missing"));
   });
 });

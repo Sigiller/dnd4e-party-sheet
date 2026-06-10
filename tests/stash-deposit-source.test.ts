@@ -7,6 +7,7 @@ import {
   resolveCompendiumPackId,
   resolveCompendiumPackTitle,
 } from "../src/party/stash-deposit-source.js";
+import { mockActor } from "./helpers/mock-actor.js";
 
 const MOCK_PACKS = [
   { collection: "Compendium.dnd4e.items", title: "D&D 4e Items" },
@@ -77,7 +78,7 @@ describe("classifyDepositSource", () => {
     assert.equal(
       classifyDepositSource(
         { uuid: "Actor.pc1.Item.item1" },
-        { uuid: "Actor.pc1.Item.item1", actor: { id: "pc1" } }
+        { uuid: "Actor.pc1.Item.item1", actor: mockActor({ id: "pc1" }) }
       ),
       "inventory"
     );

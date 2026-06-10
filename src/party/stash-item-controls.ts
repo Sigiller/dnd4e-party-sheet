@@ -1,24 +1,27 @@
+import { formatMessage } from "../i18n.js";
+import { getGameActors } from "../types/dnd4e.js";
 import { logItemDeleted } from "./stash-chat-log.js";
 
 export async function editStashItem(stashActorId: string, itemId: string): Promise<void> {
-  const item = game.actors.get(stashActorId)?.items.get(itemId);
+  const item = getGameActors()?.get(stashActorId)?.items.get(itemId);
   if (!item?.sheet) return;
   await item.sheet.render(true);
 }
 
 export async function deleteStashItem(stashActorId: string, itemId: string): Promise<boolean> {
-  const item = game.actors.get(stashActorId)?.items.get(itemId);
+  const item = getGameActors()?.get(stashActorId)?.items.get(itemId);
   if (!item) return false;
 
   let shouldDelete = true;
-  if (game.settings.get("dnd4e", "itemDeleteConfirmation")) {
-    shouldDelete = await foundry.applications.api.Dialog.confirm({
+  if (game.settings?.get("dnd4e", "itemDeleteConfirmation")) {
+    const confirmed = await foundry.applications.api.Dialog.confirm({
       window: {
-        title: game.i18n.format("DND4E.DeleteConfirmTitle", { name: item.name }),
+        title: formatMessage("DND4E.DeleteConfirmTitle", { name: item.name }),
       },
-      content: game.i18n.format("DND4E.DeleteConfirmContent", { name: item.name }),
+      content: formatMessage("DND4E.DeleteConfirmContent", { name: item.name }),
       yes: { default: true },
     });
+    shouldDelete = Boolean(confirmed);
   }
 
   if (!shouldDelete) return false;

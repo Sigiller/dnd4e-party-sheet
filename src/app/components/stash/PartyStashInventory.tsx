@@ -1,5 +1,6 @@
 import { useRef, useState, type MouseEvent } from "react";
 import type { InventoryRow, InventorySection } from "../../../party/inventory-prep.js";
+import { localize } from "../../../i18n.js";
 import { deleteStashItem, editStashItem } from "../../../party/stash-item-controls.js";
 import { StashInventoryRoot } from "./PartyStash.styles.js";
 
@@ -12,7 +13,7 @@ interface PartyStashInventoryProps {
 }
 
 function loc(key: string): string {
-  const text = game.i18n.localize(key);
+  const text = localize(key);
   return text === key ? key : text;
 }
 

@@ -4,7 +4,7 @@ import {
   getItemStackQuantity,
   parseTransferQuantity,
   shouldPromptTransferQuantity,
-} from "../src/party/stash-transfer-quantity.ts";
+} from "../src/party/stash-transfer-quantity.js";
 
 describe("getItemStackQuantity", () => {
   it("treats missing or zero as 1", () => {

@@ -1,6 +1,7 @@
 import type { KeyboardEvent } from "react";
 import styled from "styled-components";
 import { MODULE_ID } from "../../constants.js";
+import { localize } from "../../i18n.js";
 import {
   DND4E_ACTOR_INVENTORY_TAB,
   type OpenActorSheetOptions,
@@ -82,7 +83,7 @@ export function ActorNameLink({
   sheetOptions,
   className,
 }: ActorNameLinkProps) {
-  const title = game.i18n.localize(tooltipKey(sheetOptions));
+  const title = localize(tooltipKey(sheetOptions));
 
   if (variant === "tableHeader") {
     return (
@@ -148,7 +149,7 @@ export function ActorPortraitLink({
   className,
   sheetOptions,
 }: ActorPortraitLinkProps) {
-  const title = game.i18n.localize(tooltipKey(sheetOptions));
+  const title = localize(tooltipKey(sheetOptions));
 
   return (
     <PortraitButton

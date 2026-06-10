@@ -1,3 +1,5 @@
+import { getGameActors } from "../types/dnd4e.js";
+
 export interface OpenActorSheetOptions {
   tab?: string;
   tabGroup?: string;
@@ -16,10 +18,15 @@ export const DND4E_ACTOR_INVENTORY_TAB: OpenActorSheetOptions = {
 
 type SheetTabsConfig = Record<string, { tabs?: { id: string }[] }>;
 
-type SheetLike = NonNullable<Actor["sheet"]> & {
+export interface SheetLike {
+  rendered: boolean;
+  render: (options?: ActorSheetRenderOptions | boolean) => Promise<void>;
+  bringToFront?: () => void;
+  changeTab?: (tab: string, group: string, options?: { force?: boolean }) => void;
+  tabGroups?: Record<string, string>;
+  element?: HTMLElement | { querySelector: (selector: string) => Element | null };
   document?: { id?: string };
-  element?: { querySelector: (selector: string) => Element | null };
-};
+}
 
 /** Resolve the tab group that contains inventory for the active actor sheet class. */
 export function resolveInventoryTabGroup(sheet: SheetLike): string {
@@ -89,7 +96,7 @@ function clickSheetTabNav(sheet: SheetLike, tab: string, group: string): boolean
 
   for (const selector of selectors) {
     const element = root.querySelector(selector);
-    if (element && "click" in element && typeof element.click === "function") {
+    if (element instanceof HTMLElement) {
       element.click();
       return true;
     }
@@ -156,22 +163,22 @@ export function applyPendingActorSheetTab(sheet: SheetLike): void {
 }
 
 export function registerActorSheetTabHook(): void {
-  const onRenderActorSheet = (app: SheetLike) => {
-    applyPendingActorSheetTab(app);
+  const onRenderActorSheet = (app: unknown) => {
+    applyPendingActorSheetTab(app as SheetLike);
   };
 
   Hooks.on("renderActorSheetV2", onRenderActorSheet);
-  Hooks.on("renderActorSheet", onRenderActorSheet);
+  Hooks.on("renderActorSheet", onRenderActorSheet as never);
 }
 
 export async function openActorSheet(
   actorId: string,
   options?: OpenActorSheetOptions
 ): Promise<void> {
-  const actor = game.actors.get(actorId);
+  const actor = getGameActors()?.get(actorId);
   if (!actor?.sheet) return;
 
-  const sheet = actor.sheet as SheetLike;
+  const sheet = actor.sheet as unknown as SheetLike;
   const { tab, group } = resolveActorSheetTab(sheet, options);
 
   if (tab) {

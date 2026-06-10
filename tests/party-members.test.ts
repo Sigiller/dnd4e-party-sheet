@@ -8,13 +8,13 @@ const NONE = 0;
 const FLAG = "dnd4e-party-sheet";
 const PC = "Player Character";
 
-type TestActor = {
+interface TestActor {
   id: string;
   type: string;
   folder: string | { id: string } | null;
   flags?: Record<string, Record<string, unknown>>;
   ownership: Record<string, number>;
-};
+}
 
 function getActorFolderId(actor: TestActor): string | null {
   const f = actor.folder;

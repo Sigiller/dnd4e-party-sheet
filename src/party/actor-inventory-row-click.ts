@@ -16,13 +16,13 @@ export function registerActorInventoryRowClickHook(): void {
     header.querySelector<HTMLElement>('[data-action="itemSummary"]')?.click();
   };
 
-  const bindInventoryClick = (app: { element?: HTMLElement }) => {
-    const host = app.element;
+  const bindInventoryClick = (app: unknown) => {
+    const host = (app as { element?: HTMLElement }).element;
     if (!host || host.dataset.partySheetInventoryClick === "1") return;
     host.dataset.partySheetInventoryClick = "1";
     host.addEventListener("click", onInventoryClick);
   };
 
   Hooks.on("renderActorSheetV2", bindInventoryClick);
-  Hooks.on("renderActorSheet", bindInventoryClick);
+  Hooks.on("renderActorSheet", bindInventoryClick as never);
 }

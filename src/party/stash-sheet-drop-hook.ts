@@ -1,11 +1,10 @@
 import { MODULE_ID } from "../constants.js";
-import type { Actor } from "../foundry-globals.js";
 import { handleStashItemDropOnActor } from "./stash-transfer.js";
 
-type ActorSheet4eClass = {
+interface ActorSheet4eClass {
   name: string;
   prototype: { _onDropItem: (event: DragEvent, data: object) => Promise<unknown> };
-};
+}
 
 function libWrapperIndexKey(key: string): string {
   const escaped = key.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -23,7 +22,8 @@ function isDnd4eActorSheetClass(
   cls: { prototype?: object } | undefined,
   ActorSheet4e: ActorSheet4eClass
 ): boolean {
-  return Boolean(cls?.prototype && ActorSheet4e?.prototype && cls.prototype instanceof ActorSheet4e);
+  if (!cls?.prototype || !ActorSheet4e?.prototype) return false;
+  return Object.getPrototypeOf(cls.prototype) === ActorSheet4e.prototype;
 }
 
 function getActorSheet4eMethodTargets(ActorSheet4e: ActorSheet4eClass, method: string): string[] {
@@ -31,7 +31,7 @@ function getActorSheet4eMethodTargets(ActorSheet4e: ActorSheet4eClass, method: s
   const className = ActorSheet4e?.name ?? "ActorSheet4e";
   const actorTypes = new Set([
     ...Object.keys(CONFIG.Actor?.sheetClasses ?? {}),
-    ...Object.keys((CONFIG.Actor as { dataModels?: Record<string, unknown> })?.dataModels ?? {}),
+    ...Object.keys(CONFIG.Actor?.dataModels ?? {}),
   ]);
 
   const DSC = foundry.applications.apps?.DocumentSheetConfig as
@@ -74,16 +74,19 @@ function getActorSheet4eMethodTargets(ActorSheet4e: ActorSheet4eClass, method: s
   return [...new Set(targets)];
 }
 
-async function stashOnDropItemWrapper(
-  this: { actor: Actor },
+function stashOnDropItemWrapper(
+  this: { actor: Actor.Implementation },
   wrapped: (event: DragEvent, data: object) => Promise<unknown>,
   event: DragEvent,
   data: object
 ): Promise<unknown> {
-  if (await handleStashItemDropOnActor(this.actor, data as Record<string, unknown>)) {
-    return false;
-  }
-  return wrapped.call(this, event, data);
+  const actor = this.actor;
+  return (async () => {
+    if (await handleStashItemDropOnActor(actor, data as Record<string, unknown>)) {
+      return false;
+    }
+    return wrapped.call(this, event, data);
+  })();
 }
 
 function patchSheetClassesDirectly(ActorSheet4e: ActorSheet4eClass): void {
@@ -96,7 +99,7 @@ function patchSheetClassesDirectly(ActorSheet4e: ActorSheet4eClass): void {
 
     const original = sheetCls.prototype._onDropItem;
     sheetCls.prototype._onDropItem = async function (
-      this: { actor: Actor },
+      this: { actor: Actor.Implementation },
       event: DragEvent,
       data: object
     ) {
@@ -120,6 +123,7 @@ function patchSheetClassesDirectly(ActorSheet4e: ActorSheet4eClass): void {
 /** Intercept dnd4e actor sheet item drops so stash transfers do not also run default _onDropItemCreate. */
 export async function registerStashActorSheetDropHook(): Promise<void> {
   const { default: ActorSheet4e } = (await import(
+    // @ts-expect-error Foundry resolves /systems/... paths at runtime only.
     "/systems/dnd4e/module/actor/actor-sheet.js"
   )) as { default: ActorSheet4eClass };
   const lw = (globalThis as { libWrapper?: typeof libWrapper }).libWrapper;
@@ -129,8 +133,7 @@ export async function registerStashActorSheetDropHook(): Promise<void> {
   if (lw) {
     for (const target of targets) {
       try {
-        // MIXED: may skip wrapped() when handling stash→PC (WRAPPER requires always chaining).
-        lw.register(MODULE_ID, target, stashOnDropItemWrapper, lw.MIXED);
+        lw.register(MODULE_ID, target, stashOnDropItemWrapper as (...args: unknown[]) => unknown, lw.MIXED);
         registered++;
       } catch {
         /* sheet class not loaded yet */

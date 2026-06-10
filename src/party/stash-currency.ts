@@ -1,4 +1,5 @@
-import type { Actor } from "../foundry-globals.js";
+import { localize } from "../i18n.js";
+import { readRitualcomp, readStashCurrency, updateActorData } from "../types/dnd4e.js";
 import { canEditStashCurrency } from "./stash-permissions.js";
 import {
   logCurrencyAdded,
@@ -32,10 +33,10 @@ export function normalizeRitualcompRecord(raw: CurrencyRecord | undefined): Curr
 
 export function getCurrencyLabel(key: string): string {
   if (key === RITUALCOMP_RS_KEY) {
-    return game.i18n.localize("DND4E.RitualCompRS");
+    return localize("DND4E.RitualCompRS");
   }
-  const locKey = CONFIG.DND4E.currencies[key as keyof typeof CONFIG.DND4E.currencies];
-  return locKey ? game.i18n.localize(locKey) : key.toUpperCase();
+  const locKey = CONFIG.DND4E.currencies[key];
+  return locKey ? localize(locKey) : key.toUpperCase();
 }
 
 export function getStashCurrencyRows(
@@ -178,14 +179,14 @@ export function applySubtractByGpSum(
 }
 
 export async function addStashCurrency(
-  stashActor: Actor,
+  stashActor: Actor.Implementation,
   deltas: CurrencyDeltas
 ): Promise<void> {
   if (!canEditStashCurrency(stashActor)) return;
-  const currency = (stashActor.system?.currency ?? {}) as CurrencyRecord;
-  const ritualcomp = (stashActor.system?.ritualcomp ?? {}) as CurrencyRecord;
+  const currency = readStashCurrency(stashActor);
+  const ritualcomp = readRitualcomp(stashActor);
   const { currency: nextCurrency, ritualcomp: nextRitual } = applyAdd(currency, ritualcomp, deltas);
-  await stashActor.update({
+  await updateActorData(stashActor, {
     "system.currency": nextCurrency,
     "system.ritualcomp": nextRitual,
   });
@@ -193,15 +194,15 @@ export async function addStashCurrency(
 }
 
 export async function subtractStashCurrencyExact(
-  stashActor: Actor,
+  stashActor: Actor.Implementation,
   deltas: CurrencyDeltas
 ): Promise<{ ok: true } | { ok: false }> {
   if (!canEditStashCurrency(stashActor)) return { ok: false };
-  const currency = (stashActor.system?.currency ?? {}) as CurrencyRecord;
-  const ritualcomp = (stashActor.system?.ritualcomp ?? {}) as CurrencyRecord;
+  const currency = readStashCurrency(stashActor);
+  const ritualcomp = readRitualcomp(stashActor);
   const result = applySubtractExact(currency, ritualcomp, deltas);
   if (!result.ok) return { ok: false };
-  await stashActor.update({
+  await updateActorData(stashActor, {
     "system.currency": result.currency,
     "system.ritualcomp": result.ritualcomp,
   });
@@ -210,15 +211,15 @@ export async function subtractStashCurrencyExact(
 }
 
 export async function subtractStashCurrencyByGp(
-  stashActor: Actor,
+  stashActor: Actor.Implementation,
   gpTotal: number
 ): Promise<{ ok: true } | { ok: false }> {
   if (!canEditStashCurrency(stashActor)) return { ok: false };
-  const currency = (stashActor.system?.currency ?? {}) as CurrencyRecord;
-  const ritualcomp = (stashActor.system?.ritualcomp ?? {}) as CurrencyRecord;
+  const currency = readStashCurrency(stashActor);
+  const ritualcomp = readRitualcomp(stashActor);
   const result = applySubtractByGpSum(currency, gpTotal);
   if (!result.ok) return { ok: false };
-  await stashActor.update({
+  await updateActorData(stashActor, {
     "system.currency": result.currency,
     "system.ritualcomp": normalizeRitualcompRecord(ritualcomp),
   });

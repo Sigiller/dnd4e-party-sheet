@@ -5,17 +5,17 @@ const OWNER = 3;
 const LIMITED = 2;
 const PLAYER = 1;
 
-type MockUser = {
+interface MockUser {
   id: string;
   active: boolean;
   isGM: boolean;
   role: number;
-};
+}
 
-type MockActor = {
+interface MockActor {
   ownership: Record<string, number>;
   testUserPermission: (user: MockUser, level: number) => boolean;
-};
+}
 
 function mockActor(ownership: Record<string, number>): MockActor {
   return {

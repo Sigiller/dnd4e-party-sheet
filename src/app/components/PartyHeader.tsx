@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MODULE_ID, type PartyFolderFlags } from "../../constants.js";
+import { localize as loc } from "../../i18n.js";
 import {
   EmblemButton,
   Header,
@@ -17,7 +18,7 @@ interface PartyHeaderProps {
 }
 
 export function PartyHeader({ flags, partyLevel, onNameChange, onEmblemClick }: PartyHeaderProps) {
-  const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
+  const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
   const [name, setName] = useState(flags.displayName ?? "");
 
   useEffect(() => {

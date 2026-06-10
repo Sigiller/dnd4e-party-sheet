@@ -46,9 +46,15 @@ export const DefencesRow = styled.div`
     margin-right: 0.5em;
   }
 
+  .effects-block {
+    gap: 0.25em;
+  }
+
   .effects-block img {
     border-radius: 3px;
     cursor: help;
+    background-color: ${({ theme }) => theme.colourPcHead};
+    object-fit: contain;
   }
 `;
 

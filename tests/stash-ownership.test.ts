@@ -6,12 +6,12 @@ const NONE = 0;
 const PLAYER = 1;
 const TRUSTED = 2;
 
-type MockUser = {
+interface MockUser {
   id: string;
   isGM: boolean;
   active: boolean;
   role: number;
-};
+}
 
 function buildStashOwnership(users: MockUser[]): Record<string, number> {
   const ownership: Record<string, number> = { default: NONE };

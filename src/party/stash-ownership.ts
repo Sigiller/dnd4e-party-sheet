@@ -1,19 +1,10 @@
-import type { Actor, User } from "../foundry-globals.js";
+import { updateActorData } from "../types/dnd4e.js";
 
 function isGmClient(): boolean {
   return Boolean(game.user?.isGM);
 }
 
-function iterateGameUsers(): User[] {
-  const users = game.users;
-  if (users?.contents?.length) return [...users.contents];
-  if (users && typeof users[Symbol.iterator] === "function") {
-    return [...users];
-  }
-  return [];
-}
-
-function isPlayerOrTrustedUser(user: User): boolean {
+function isPlayerOrTrustedUser(user: User.Implementation): boolean {
   return (
     !user.isGM &&
     (user.role === CONST.USER_ROLES.PLAYER || user.role === CONST.USER_ROLES.TRUSTED)
@@ -26,7 +17,7 @@ export function buildStashOwnership(): Record<string, number> {
     default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE,
   };
 
-  for (const user of iterateGameUsers()) {
+  for (const user of game.users?.contents ?? []) {
     if (user.isGM) {
       ownership[user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
     } else if (isPlayerOrTrustedUser(user)) {
@@ -48,11 +39,11 @@ function ownershipDiffers(
   return false;
 }
 
-export async function syncStashActorOwnership(actor: Actor): Promise<void> {
+export async function syncStashActorOwnership(actor: Actor.Implementation): Promise<void> {
   if (!isGmClient()) return;
 
   const ownership = buildStashOwnership();
   if (!ownershipDiffers(actor.ownership ?? {}, ownership)) return;
 
-  await actor.update({ ownership }, { render: false });
+  await updateActorData(actor, { ownership });
 }

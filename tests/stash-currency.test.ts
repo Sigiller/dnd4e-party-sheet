@@ -5,7 +5,7 @@ import {
   applySubtractByGpSum,
   applySubtractExact,
   normalizeCurrencyRecord,
-} from "../src/party/stash-currency.ts";
+} from "../src/party/stash-currency.js";
 
 const conversion: Record<string, { gp: number }> = {
   cp: { gp: 0.01 },

@@ -1,4 +1,5 @@
 import { MODULE_ID } from "../../constants.js";
+import { localize as loc } from "../../i18n.js";
 import type { PartySnapshot } from "../../party/party-data.js";
 import { PartySkillsLanguagesSection } from "../components/overview/PartySkillsLanguagesSection.js";
 import { MemberCard } from "../components/members/MemberCard.js";
@@ -9,7 +10,7 @@ interface OverviewTabProps {
 }
 
 export function OverviewTab({ snapshot }: OverviewTabProps) {
-  const localize = (key: string) => game.i18n.localize(`${MODULE_ID}.${key}`);
+  const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   return (
     <OverviewTabPanel>

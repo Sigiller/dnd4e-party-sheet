@@ -5,6 +5,8 @@ import { prepareInventorySections, computeStashLoad } from "../party/inventory-p
 import { currencyToGp, roundGp } from "../party/wealth.js";
 import { getPartyFolderName } from "../settings.js";
 import { canEditStash, canEditStashCurrency } from "../party/stash-permissions.js";
+import { readRitualcomp, readStashCurrency, requireActorId } from "../types/dnd4e.js";
+import { formatMessage, localize } from "../i18n.js";
 import { mountPartySheet, unmountPartySheet } from "./mount.js";
 import type { PartySheetProps } from "./PartySheetRoot.js";
 
@@ -23,7 +25,7 @@ export class PartySheetApp extends ApplicationV2 {
     this.folderId = folderId;
   }
 
-  static DEFAULT_OPTIONS = {
+  static override DEFAULT_OPTIONS = {
     id: "dnd4e-party-sheet-app",
     classes: ["dnd4e-party-sheet", "sheet", "fox4e", "dnd4e"],
     tag: "div",
@@ -41,24 +43,25 @@ export class PartySheetApp extends ApplicationV2 {
 
   get title(): string {
     const flags = this.#props?.flags;
-    return flags?.displayName || game.i18n.localize(`${MODULE_ID}.sheet.title`);
+    return flags?.displayName || localize(`${MODULE_ID}.sheet.title`);
   }
 
-  async _prepareContext(): Promise<PartySheetProps> {
+  async #buildProps(): Promise<PartySheetProps> {
     const ctx = await resolvePartyContext(this.folderId);
     if (!ctx) throw new Error("Party folder not found");
 
-    const snapshot = await buildPartySnapshot(ctx.folder.id);
+    const snapshot = await buildPartySnapshot(ctx.folder.id ?? this.folderId);
     const inventory = await prepareInventorySections(ctx.stashActor);
     const stashLoad = computeStashLoad(ctx.stashActor);
-    const stashGp = currencyToGp((ctx.stashActor.system?.currency as Record<string, number>) ?? {});
+    const stashGp = currencyToGp(readStashCurrency(ctx.stashActor));
     const membersGp = snapshot.members.reduce((s, m) => s + m.gp, 0);
     const partyTotalGp = roundGp(membersGp + stashGp);
+    const stashActorId = requireActorId(ctx.stashActor);
 
     const props: PartySheetProps = {
-      folderId: ctx.folder.id,
+      folderId: ctx.folder.id ?? this.folderId,
       flags: getPartyFlags(ctx.folder),
-      stashActorId: ctx.stashActor.id,
+      stashActorId,
       canEdit: canEditStash(ctx.stashActor),
       canEditCurrency: canEditStashCurrency(ctx.stashActor),
       snapshot,
@@ -67,28 +70,38 @@ export class PartySheetApp extends ApplicationV2 {
         load: stashLoad,
         gp: stashGp,
         partyTotalGp,
-        currency: (ctx.stashActor.system?.currency ?? {}) as Record<string, number>,
-        ritualcomp: (ctx.stashActor.system?.ritualcomp ?? {}) as Record<string, number>,
-        actor: ctx.stashActor,
+        currency: readStashCurrency(ctx.stashActor),
+        ritualcomp: readRitualcomp(ctx.stashActor),
+        actor: { id: stashActorId },
       },
       onUpdateFlags: async (patch) => {
         await updatePartyFlags(ctx.folder, patch);
         await this.refreshData();
       },
-      onRefresh: () => this.refreshData(),
+      onRefresh: () => {
+        void this.refreshData();
+      },
     };
 
     this.#props = props;
     return props;
   }
 
-  async _renderHTML(_context: PartySheetProps, _options: unknown): Promise<HTMLElement> {
+  protected override async _prepareContext(): Promise<object> {
+    return this.#buildProps();
+  }
+
+  protected override async _renderHTML(_context: object, _options: unknown): Promise<HTMLElement> {
     const root = document.createElement("div");
     root.className = "party-sheet-react-root";
     return root;
   }
 
-  async _replaceHTML(result: HTMLElement, content: HTMLElement, _options: unknown): Promise<void> {
+  protected override async _replaceHTML(
+    result: HTMLElement,
+    content: HTMLElement,
+    _options: unknown
+  ): Promise<void> {
     const existing = content.querySelector(":scope > .party-sheet-react-root");
     if (existing instanceof HTMLElement) return;
     content.replaceChildren(result);
@@ -97,7 +110,7 @@ export class PartySheetApp extends ApplicationV2 {
   /** Re-render React tree only — keeps tab/UI state, does not replace the DOM host. */
   async refreshData(): Promise<void> {
     if (!this.rendered) return;
-    const props = await this._prepareContext({});
+    const props = await this.#buildProps();
     this.#props = props;
     const root = this.element?.querySelector(".party-sheet-react-root");
     if (root instanceof HTMLElement) {
@@ -112,21 +125,24 @@ export class PartySheetApp extends ApplicationV2 {
     if (el) el.textContent = title;
   }
 
-  async render(force = false, options: Record<string, unknown> = {}): Promise<this> {
-    if (!game.system || game.system.id !== "dnd4e") return this;
+  // @ts-expect-error PartySheetApp uses force refresh semantics via options.force.
+  override async render(options?: { force?: boolean }): Promise<this> {
+    if (game.system?.id !== "dnd4e") return this;
+    const force = options?.force ?? false;
     if (this.rendered && !force) {
       await this.refreshData();
       return this;
     }
-    this.#pendingProps = await this._prepareContext(options);
-    return super.render(force, options);
+    this.#pendingProps = await this.#buildProps();
+    return super.render(options);
   }
 
-  async _onRender(context: PartySheetProps, options: unknown): Promise<void> {
-    await super._onRender(context, options);
+  protected override async _onRender(_context: object, options: unknown): Promise<void> {
+    // @ts-expect-error ApplicationV2._onRender accepts DeepPartial render options at runtime.
+    await super._onRender(_context, options);
     const props =
       this.#pendingProps ??
-      (context?.snapshot?.members ? context : await this._prepareContext({}));
+      (this.#props ?? (await this.#buildProps()));
     this.#pendingProps = null;
     const root = this.element?.querySelector(".party-sheet-react-root");
     if (root instanceof HTMLElement) {
@@ -134,34 +150,35 @@ export class PartySheetApp extends ApplicationV2 {
     }
   }
 
-  async _onClose(options: unknown): Promise<void> {
+  protected override async _onClose(options: unknown): Promise<void> {
     unmountPartySheet();
     if (activeSheet === this) activeSheet = null;
+    // @ts-expect-error ApplicationV2._onClose accepts DeepPartial render options at runtime.
     await super._onClose(options);
   }
-
 }
 
 export async function openPartySheet(folderId?: string): Promise<void> {
   const ctx = await resolvePartyContext(folderId);
   if (!ctx) {
     ui.notifications?.warn(
-      game.i18n.format(`${MODULE_ID}.sheet.noPartyFolder`, {
-        name: getPartyFolderName(),
-      })
+      formatMessage(`${MODULE_ID}.sheet.noPartyFolder`, { name: getPartyFolderName() })
     );
     return;
   }
 
-  if (activeSheet?.folderId === ctx.folder.id && activeSheet.rendered) {
+  const resolvedFolderId = ctx.folder.id ?? folderId;
+  if (!resolvedFolderId) return;
+
+  if (activeSheet?.folderId === resolvedFolderId && activeSheet.rendered) {
     activeSheet.bringToFront();
     return;
   }
 
   if (activeSheet) await activeSheet.close();
 
-  activeSheet = new PartySheetApp(ctx.folder.id);
-  await activeSheet.render(true);
+  activeSheet = new PartySheetApp(resolvedFolderId);
+  await activeSheet.render({ force: true });
 }
 
 export function schedulePartySheetRefresh(): void {
