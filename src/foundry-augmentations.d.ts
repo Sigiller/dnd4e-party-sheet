@@ -55,6 +55,7 @@ declare module "fvtt-types/configuration" {
     "dnd4e-party-sheet.stashChatLog": boolean;
     "dnd4e-xp-award.partyFolderName": string;
     "dnd4e.itemDeleteConfirmation": boolean;
+    "dnd4e.autoCollapseItemCards": boolean;
   }
 
   export interface FlagConfig {

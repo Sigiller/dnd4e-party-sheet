@@ -24,7 +24,7 @@ A hidden **Party Stash** NPC is created in the Party folder for shared inventory
 
 ```bash
 cd Data/modules/dnd4e-party-sheet
-npm install
+npm install        # installs Husky pre-push hook via prepare
 npm run build      # outputs dist/main.js (styles via styled-components in bundle)
 npm run dev        # watch mode
 npm test
@@ -35,9 +35,16 @@ Commit `dist/` before tagging a release, or let GitHub Actions build on tag push
 ## Release
 
 ```bash
-# Bump version in module.json and package.json, then:
-git tag v0.3.0
-git push origin v0.3.0
+# Bump version in module.json, then:
+git tag v0.6.2
+git push origin v0.6.2
+```
+
+Husky pre-push blocks tag pushes when the tag (`vX.Y.Z`) does not match
+`module.json` `version`. Manual check:
+
+```bash
+npm run verify-tag-version -- refs/tags/v0.6.2 push
 ```
 
 ## Recommended modules
