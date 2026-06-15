@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
-    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "verify:system": "node tools/verify-system-hooks.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run verify:system && npm run build",
+    "e2e:smoke": "node --import tsx ../../tools/foundry-e2e/src/run-smoke.ts --module dnd4e-party-sheet",
+    "e2e:perf": "node --import tsx ../../tools/foundry-e2e/src/run-perf.ts --module dnd4e-party-sheet",
+    "e2e": "npm run build && npm run e2e:smoke && npm run e2e:perf",
     "prepare": "husky",
     "verify-tag-version": "bash scripts/verify-tag-version.sh",
     "test": "node --import tsx --test tests/*.test.ts"

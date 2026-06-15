@@ -50,7 +50,7 @@ const sharedTypeCheckedRules = {
 };
 
 export default tseslint.config(
-  { ignores: ["dist/**", "node_modules/**"] },
+  { ignores: ["dist/**", "node_modules/**", "e2e/**"] },
 
   {
     files: ["src/**/*.{ts,tsx}"],

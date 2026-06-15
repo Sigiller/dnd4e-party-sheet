@@ -35,6 +35,7 @@ verify_tag_ref() {
   fi
 
   echo "pre-push: ${tag} matches module.json version ${MVER}"
+  bash "$(dirname "$0")/pre-release-gate.sh"
 }
 
 if [[ $# -ge 2 ]]; then
