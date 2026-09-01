@@ -639,7 +639,7 @@ export async function clickInventoryRowHeader(page: Page): Promise<void> {
     );
     if (!header) return false;
     const detail = header.querySelector(
-      ".item-detail.item-weight, .item-detail.item-level, .item-detail.item-quantity, .item-detail"
+      ".item-detail.item-price, .item-detail.item-quantity, .item-detail.item-weight, .item-detail"
     );
     if (detail instanceof HTMLElement) {
       detail.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));

@@ -30,7 +30,7 @@ export function registerPartyFolderHooks(): void {
   });
 }
 
-/** Resolve directory root element (Foundry v12 jQuery vs v13 HTMLElement). */
+/** Resolve directory root element (HTMLElement from ApplicationV2 render hooks). */
 function resolveDirectoryRoot(app: DirectoryApp, html: unknown): HTMLElement | null {
   if (html instanceof HTMLElement) return html;
   if (Array.isArray(html) && html[0] instanceof HTMLElement) return html[0];

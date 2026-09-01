@@ -5,10 +5,7 @@ import {
 import { copyItemOntoStash, transferItemOntoStash } from "./stash-transfer.js";
 
 function getDropData(event: DragEvent): Record<string, unknown> | null {
-  const TextEditor = foundry.applications.ux.TextEditor;
-  const data =
-    TextEditor.getDragEventData?.(event) ??
-    TextEditor.implementation?.getDragEventData?.(event);
+  const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
   return data && typeof data === "object" ? (data as Record<string, unknown>) : null;
 }
 

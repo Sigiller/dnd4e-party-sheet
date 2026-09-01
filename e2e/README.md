@@ -6,8 +6,8 @@ Production-like copy: **Scales of War** (`scales-of-war`).
 
 ## Requirements
 
-- Foundry **v13.351**
-- System **dnd4e** **0.7.14** (as in this world)
+- Foundry **v14** (verified **14.367**)
+- System **dnd4e** **0.9.2** (as in this world)
 - Modules enabled:
   - **dnd4e-party-sheet**
   - **[Hook Macros (launchmacro)](https://foundryvtt.com/packages/launchmacro)** v3+

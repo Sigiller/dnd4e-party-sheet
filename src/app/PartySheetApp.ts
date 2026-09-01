@@ -121,6 +121,13 @@ export class PartySheetApp extends ApplicationV2 {
 
   #updateWindowTitle(): void {
     const title = this.title;
+    const windowTitle = (
+      this as { window?: { title?: HTMLElement } }
+    ).window?.title;
+    if (windowTitle) {
+      windowTitle.textContent = title;
+      return;
+    }
     const el = this.element?.querySelector(".window-header .window-title");
     if (el) el.textContent = title;
   }

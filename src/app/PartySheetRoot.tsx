@@ -40,12 +40,15 @@ export function PartySheetRoot(props: PartySheetProps) {
   const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   const onEmblemPick = useCallback(async () => {
-    const fp = new foundry.applications.apps.FilePicker({
+    const FilePickerCtor =
+      foundry.applications.apps.FilePicker.implementation ??
+      foundry.applications.apps.FilePicker;
+    const fp = new FilePickerCtor({
       type: "image",
       current: props.flags.emblem ?? "",
       callback: (path: string) => props.onUpdateFlags({ emblem: path }),
     });
-    await fp.render(true);
+    await fp.render({ force: true });
   }, [props]);
 
   return (

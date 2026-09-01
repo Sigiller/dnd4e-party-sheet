@@ -124,7 +124,7 @@ function patchSheetClassesDirectly(ActorSheet4e: ActorSheet4eClass): void {
 export async function registerStashActorSheetDropHook(): Promise<void> {
   const { default: ActorSheet4e } = (await import(
     // @ts-expect-error Foundry resolves /systems/... paths at runtime only.
-    "/systems/dnd4e/module/actor/actor-sheet.js"
+    "/systems/dnd4e/module/applications/sheets/actor-sheet.mjs"
   )) as { default: ActorSheet4eClass };
   const lw = (globalThis as { libWrapper?: typeof libWrapper }).libWrapper;
   const targets = getActorSheet4eMethodTargets(ActorSheet4e, "_onDropItem");

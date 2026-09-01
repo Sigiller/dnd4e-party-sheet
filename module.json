@@ -1,8 +1,8 @@
 {
   "id": "dnd4e-party-sheet",
   "title": "D&D 4e Party Sheet",
-  "description": "<p>Party sheet for D&amp;D 4e: overview of PCs, shared skills/languages, and party stash. Foundry v13.</p>",
-  "version": "0.6.2",
+  "description": "<p>Party sheet for D&amp;D 4e: overview of PCs, shared skills/languages, and party stash. Foundry v14, dnd4e system.</p>",
+  "version": "0.7.0",
   "authors": [
     {
       "name": "Sigiller",
@@ -22,9 +22,8 @@
     }
   ],
   "compatibility": {
-    "minimum": "13.351",
-    "maximum": "13.351",
-    "verified": "13.351"
+    "minimum": "14",
+    "verified": "14.367"
   },
   "relationships": {
     "systems": [

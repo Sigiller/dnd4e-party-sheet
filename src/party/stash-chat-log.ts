@@ -52,15 +52,10 @@ function chatKey(base: string, ctx: ActingContext): string {
 }
 
 async function enrichChatHtml(html: string): Promise<string> {
-  const TextEditor = foundry.applications.ux.TextEditor as {
-    enrichHTML?: (content: string, options?: object) => Promise<string>;
-    implementation?: { enrichHTML?: (content: string, options?: object) => Promise<string> };
-  };
-  const enrich = TextEditor.implementation?.enrichHTML ?? TextEditor.enrichHTML;
-  if (typeof enrich === "function") {
-    return enrich(html, { async: true, secrets: false });
-  }
-  return html;
+  const enrich = foundry.applications.ux.TextEditor.implementation.enrichHTML.bind(
+    foundry.applications.ux.TextEditor.implementation
+  );
+  return enrich(html, { secrets: false });
 }
 
 async function postStashChatMessage(
@@ -73,7 +68,7 @@ async function postStashChatMessage(
 
   const content = await enrichChatHtml(html);
   await ChatMessage.create({
-    user: user.id,
+    author: user.id,
     speaker: ChatMessage.getSpeaker(
       characterActor
         ? ({ actor: characterActor } as Parameters<typeof ChatMessage.getSpeaker>[0])

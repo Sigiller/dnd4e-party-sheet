@@ -168,7 +168,6 @@ export function registerActorSheetTabHook(): void {
   };
 
   Hooks.on("renderActorSheetV2", onRenderActorSheet);
-  Hooks.on("renderActorSheet", onRenderActorSheet as never);
 }
 
 export async function openActorSheet(

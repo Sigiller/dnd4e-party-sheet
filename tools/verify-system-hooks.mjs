@@ -9,7 +9,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const moduleRoot = path.resolve(__dirname, "..");
 const systemRoot = path.resolve(moduleRoot, "../../systems/dnd4e");
-const EXPECTED_VERSION = "0.7.14";
+const EXPECTED_VERSION = "0.9.2";
+const ACTOR_SHEET_REL = "module/applications/sheets/actor-sheet.mjs";
 
 function read(rel) {
 	return fs.readFileSync(path.join(systemRoot, rel), "utf8");
@@ -32,7 +33,7 @@ if (!systemExists()) {
 }
 
 const systemJson = JSON.parse(fs.readFileSync(path.join(systemRoot, "system.json"), "utf8"));
-const actorSheet = read("module/actor/actor-sheet.js");
+const actorSheet = read(ACTOR_SHEET_REL);
 
 ok("system.version", systemJson.version === EXPECTED_VERSION, systemJson.version);
 ok("ActorSheet4e class", /class ActorSheet4e/.test(actorSheet));

@@ -7,7 +7,7 @@ function isPlayerOrTrustedUser(user: User.Implementation): boolean {
   return user.role === CONST.USER_ROLES.PLAYER || user.role === CONST.USER_ROLES.TRUSTED;
 }
 
-/** Foundry v13 may expose folder as id string or Folder document. */
+/** Folder may be exposed as id string or Folder document. */
 export function getActorFolderId(actor: Actor.Implementation): string | null {
   const folder = actor.folder;
   if (!folder) return null;

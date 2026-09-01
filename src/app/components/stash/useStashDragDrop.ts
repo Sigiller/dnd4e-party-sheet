@@ -16,7 +16,8 @@ export function useStashDragDrop(
     const stashActor = getGameActors()?.get(stashActorId);
     if (!stashActor) return;
 
-    const dragDrop = new foundry.applications.ux.DragDrop({
+    const DragDrop = foundry.applications.ux.DragDrop.implementation;
+    const dragDrop = new DragDrop({
       dragSelector: ".item-list.gear .item.gear",
       dropSelector: null,
       permissions: {
@@ -37,10 +38,8 @@ export function useStashDragDrop(
           event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
         },
         dragover: (event: DragEvent) => {
-          const TextEditor = foundry.applications.ux.TextEditor;
           const rawData =
-            TextEditor.getDragEventData?.(event) ??
-            TextEditor.implementation?.getDragEventData?.(event);
+            foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
           const data =
             rawData && typeof rawData === "object"
               ? (rawData as Record<string, unknown>)

@@ -24,5 +24,4 @@ export function registerActorInventoryRowClickHook(): void {
   };
 
   Hooks.on("renderActorSheetV2", bindInventoryClick);
-  Hooks.on("renderActorSheet", bindInventoryClick as never);
 }

@@ -1,6 +1,6 @@
 # D&D 4e Party Sheet
 
-Foundry VTT v13 module for the **dnd4e** system: party overview (skills, languages, member cards) and shared party stash.
+Foundry VTT v14 module for the **dnd4e** system: party overview (skills, languages, member cards) and shared party stash.
 
 ## Install
 
@@ -69,8 +69,8 @@ Commit `dist/` before tagging a release, or let GitHub Actions build on tag push
 
 ```bash
 # Bump version in module.json, then:
-git tag v0.6.2
-git push origin v0.6.2
+git tag v0.7.0
+git push origin v0.7.0
 ```
 
 Husky pre-push blocks tag pushes when the tag (`vX.Y.Z`) does not match

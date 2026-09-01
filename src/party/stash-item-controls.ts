@@ -14,7 +14,7 @@ export async function deleteStashItem(stashActorId: string, itemId: string): Pro
 
   let shouldDelete = true;
   if (game.settings?.get("dnd4e", "itemDeleteConfirmation")) {
-    const confirmed = await foundry.applications.api.Dialog.confirm({
+    const confirmed = await foundry.applications.api.DialogV2.confirm({
       window: {
         title: formatMessage("DND4E.DeleteConfirmTitle", { name: item.name }),
       },
