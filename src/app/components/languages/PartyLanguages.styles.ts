@@ -10,8 +10,9 @@ export const LanguageGroup = styled.div`
   margin-top: 0.5em;
 
   h4 {
-    margin: 0 0 0.25em;
-    font-size: 0.9em;
+    margin: 0 0 0.3em;
+    font-size: 11px;
+    font-weight: 700;
     color: ${({ theme }) => theme.colourAccentOnLight};
   }
 `;
@@ -25,11 +26,12 @@ export const LanguageList = styled.ul`
   gap: ${({ theme }) => theme.spacingBadgeGap};
 
   li {
-    background: ${({ theme }) => theme.backgroundRowOdd};
-    color: ${({ theme }) => theme.colourTextOnLight};
-    padding: 0.25em 0.65em;
-    border-radius: ${({ theme }) => theme.radiusBadge};
-    font-size: 0.85em;
+    background: rgba(118, 105, 78, 0.24);
+    color: ${({ theme }) => theme.colourHeading};
+    padding: 0.3em 0.75em;
+    border-radius: ${({ theme }) => theme.radiusControl};
+    font-size: 11px;
+    line-height: 1.2;
     cursor: help;
   }
 `;

@@ -15,14 +15,17 @@ const ActorNameHeading = styled.h3`
 `;
 
 const ActorNameSidebar = styled.h4`
-  margin: 0 0 0.25em;
-  font-size: 0.8em;
-  font-weight: 400;
-  color: ${({ theme }) => theme.colourTextInside};
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colourHeading};
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   &:hover {
-    color: ${({ theme }) => theme.colourHeading};
+    color: ${({ theme }) => theme.colourPrimary100};
   }
 `;
 

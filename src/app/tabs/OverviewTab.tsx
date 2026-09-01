@@ -6,15 +6,16 @@ import { MemberCard } from "../components/members/MemberCard.js";
 import { MembersSection, OverviewTabPanel } from "../../styles/sheetLayout.js";
 
 interface OverviewTabProps {
+  folderId: string;
   snapshot: PartySnapshot;
 }
 
-export function OverviewTab({ snapshot }: OverviewTabProps) {
+export function OverviewTab({ folderId, snapshot }: OverviewTabProps) {
   const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   return (
     <OverviewTabPanel>
-      <PartySkillsLanguagesSection snapshot={snapshot} />
+      <PartySkillsLanguagesSection folderId={folderId} snapshot={snapshot} />
 
       <MembersSection>
         <h2>{localize("sheet.members.title")}</h2>

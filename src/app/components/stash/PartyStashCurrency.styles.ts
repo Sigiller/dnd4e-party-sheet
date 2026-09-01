@@ -7,9 +7,10 @@ export const CurrencyBar = styled.div.attrs({ className: "party-stash-currency f
   align-items: center;
   gap: 0.5rem;
   margin-bottom: ${({ theme }) => theme.spacingGutter};
-  padding: 0.5rem ${({ theme }) => theme.spacingGutter};
-  background: var(--background-row-odd, ${({ theme }) => theme.backgroundRowOdd});
-  border-radius: ${({ theme }) => theme.radiusPanel};
+  padding: 6px 8px;
+  background: ${({ theme }) => theme.cardSurface};
+  border: 1px solid ${({ theme }) => theme.borderCard};
+  box-shadow: ${({ theme }) => theme.shadowElement};
   color: ${({ theme }) => theme.colourTextOnLight};
 `;
 
@@ -24,9 +25,11 @@ export const CurrencyCells = styled.div`
 `;
 
 export const CurrencyDivider = styled.span`
-  padding: 0 0.4rem;
-  opacity: 0.45;
-  font-weight: 400;
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 10px;
+  background: ${({ theme }) => theme.colourPrimary100};
+  font-size: 0;
   user-select: none;
 `;
 
@@ -34,14 +37,14 @@ export const CurrencyCell = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.25rem;
+  gap: 3px;
   white-space: nowrap;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
 
   i {
-    font-size: 1rem;
-    width: 1.1rem;
+    font-size: 14px;
+    width: 20px;
     text-align: center;
   }
 
@@ -73,16 +76,16 @@ export const CurrencyActions = styled.div`
 `;
 
 export const CurrencyButton = styled.button`
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 24px;
+  height: 24px;
   padding: 0;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-normal, #8b8b8b);
-  border-radius: ${({ theme }) => theme.radiusControl};
-  background: var(--background-other, #193d5e);
+  border: none;
+  border-radius: ${({ theme }) => theme.radiusBadge};
+  background: ${({ theme }) => theme.colourPcHead};
   color: #fff;
   cursor: pointer;
 

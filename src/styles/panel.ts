@@ -1,15 +1,14 @@
 import { css } from "styled-components";
 
-/** Shared panel surface (Overview sub-content, sidebar). */
+/** Translucent parchment wash with the frame-line border (Figma card surface). */
 export const panelSurface = css`
-  background: ${({ theme }) => theme.backgroundPanel};
-  border: 1px solid ${({ theme }) => theme.borderMuted};
+  background: ${({ theme }) => theme.cardSurface};
+  border: 1px solid ${({ theme }) => theme.borderCard};
   color: ${({ theme }) => theme.colourTextOnLight};
 `;
 
-/** Elevated card (member cards, sidebar shell). */
+/** Elevated card: wash surface + container shadow. Sharp corners per design. */
 export const cardSurface = css`
   ${panelSurface}
-  border-radius: ${({ theme }) => theme.radiusCard};
   box-shadow: ${({ theme }) => theme.shadowCard};
 `;

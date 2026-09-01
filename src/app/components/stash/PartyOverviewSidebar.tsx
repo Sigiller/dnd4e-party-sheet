@@ -13,14 +13,12 @@ import {
 } from "./PartyStash.styles.js";
 
 interface PartyOverviewSidebarProps {
-  title: string;
   partyTotalGp: number;
   stashLoad: number;
   members: MemberSummary[];
 }
 
 export function PartyOverviewSidebar({
-  title,
   partyTotalGp,
   stashLoad,
   members,
@@ -29,7 +27,6 @@ export function PartyOverviewSidebar({
 
   return (
     <Sidebar>
-      <h3>{title}</h3>
       <WealthCard className="party-total-card">
         <h4>{localize("sheet.stash.partyTotal")}</h4>
         <WealthGp>{formatPartyTotalGp(partyTotalGp)} gp</WealthGp>

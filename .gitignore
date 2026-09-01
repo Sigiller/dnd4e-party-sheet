@@ -5,3 +5,4 @@ docs/
 e2e/reports/
 *.log
 .DS_Store
+.claude

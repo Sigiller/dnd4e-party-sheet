@@ -1,5 +1,6 @@
 import type { PartySkillDetailed } from "../../../party/party-data.js";
 import { ActorNameLink } from "../ActorNameLink.js";
+import { BestValueBadge } from "../../../styles/LozengeBadge.js";
 import { SkillsTable as StyledTable } from "./PartySkills.styles.js";
 
 interface SkillsTableProps {
@@ -34,18 +35,24 @@ export function SkillsTable({ detailed }: SkillsTableProps) {
         </tr>
       </thead>
       <tbody>
-        {detailed.map((row) => (
-          <tr key={row.key} className="skill--block">
-            <td className="skill-title">
-              <h4 className="skill-name">{row.label}</h4>
-            </td>
-            {row.byMember.map((cell) => (
-              <td key={cell.memberId} className="skill-value">
-                {cell.bonus >= 0 ? `+${cell.bonus}` : cell.bonus}
+        {detailed.map((row) => {
+          const best = Math.max(...row.byMember.map((cell) => cell.bonus));
+          return (
+            <tr key={row.key} className="skill--block">
+              <td className="skill-title">
+                <h4 className="skill-name">{row.label}</h4>
               </td>
-            ))}
-          </tr>
-        ))}
+              {row.byMember.map((cell) => {
+                const value = cell.bonus >= 0 ? `+${cell.bonus}` : `${cell.bonus}`;
+                return (
+                  <td key={cell.memberId} className="skill-value">
+                    {cell.bonus === best ? <BestValueBadge>{value}</BestValueBadge> : value}
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })}
       </tbody>
     </StyledTable>
   );

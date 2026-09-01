@@ -7,27 +7,12 @@ export const SkillsBlock = styled.div.attrs({ className: "party-skills-block" })
   ${textOnLightSurface}
 `;
 
-export const SkillBadges = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacingBadgeGap};
-`;
-
-export const SkillBadge = styled.span`
-  background: ${({ theme }) => theme.backgroundRowOdd};
-  color: ${({ theme }) => theme.colourTextOnLight};
-  padding: 0.25em 0.65em;
-  border-radius: ${({ theme }) => theme.radiusBadge};
-  font-size: 0.85em;
-  cursor: help;
-`;
-
 export const SkillsTable = styled.table.attrs({ className: "skills" })`
   font-family: ${({ theme }) => theme.fontFamily};
-  font-size: 0.9rem;
+  font-size: 12px;
   border-collapse: collapse;
   border: none;
-  margin: 2px 0 1rem;
+  margin: 2px 0 0.5rem;
   table-layout: fixed;
   width: 100%;
   background: unset;
@@ -40,13 +25,13 @@ export const SkillsTable = styled.table.attrs({ className: "skills" })`
 
     th {
       color: ${({ theme }) => theme.colourTextOnDark};
-      font-size: 0.75em;
+      font-size: 10px;
       text-transform: uppercase;
-      font-weight: inherit;
+      font-weight: 700;
       border: 0;
-      white-space: normal;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       vertical-align: middle;
       line-height: 1.25;
     }
@@ -62,14 +47,15 @@ export const SkillsTable = styled.table.attrs({ className: "skills" })`
 
   tbody {
     tr {
-      border-bottom: 1px solid #fff;
+      border-bottom: 0;
 
+      /* Design zebra: light ivory rows over the bare parchment panel */
       &:nth-child(odd) {
-        background: ${({ theme }) => theme.backgroundRowOdd};
+        background: ${({ theme }) => theme.tabInactiveBase};
       }
 
       &:nth-child(even) {
-        background: ${({ theme }) => theme.gradient4e};
+        background: transparent;
       }
     }
   }
@@ -81,12 +67,12 @@ export const SkillsTable = styled.table.attrs({ className: "skills" })`
 
   th,
   td {
-    padding: 0.25em 0.6em;
+    padding: 0.3em 0.6em;
     color: inherit;
   }
 
   :is(th, td).skill-title {
-    padding: 0.25em 0.25em 0.25em 0;
+    padding: 0.3em 0.25em 0.3em 5px;
     text-align: left;
     vertical-align: middle;
   }
@@ -95,12 +81,7 @@ export const SkillsTable = styled.table.attrs({ className: "skills" })`
     font-size: 1em;
     margin: 0;
     font-weight: inherit;
-    color: ${({ theme }) => theme.colourHeading};
-  }
-
-  tbody .skill-ability {
-    font-size: 0.75em;
-    text-transform: uppercase;
+    color: inherit;
   }
 
   .skill-value {

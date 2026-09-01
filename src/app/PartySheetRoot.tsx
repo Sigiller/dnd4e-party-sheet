@@ -6,12 +6,8 @@ import type { InventorySection } from "../party/inventory-prep.js";
 import { OverviewTab } from "./tabs/OverviewTab.js";
 import { StashTab } from "./tabs/StashTab.js";
 import { PartyHeader } from "./components/PartyHeader.js";
-import {
-  SheetBody,
-  SheetInner,
-  SheetTabs,
-  TabButton,
-} from "../styles/sheetLayout.js";
+import { TabFrame, type SheetTabId } from "./components/chrome/TabFrame.js";
+import { SheetInner } from "../styles/sheetLayout.js";
 
 export interface PartySheetProps {
   folderId: string;
@@ -33,10 +29,8 @@ export interface PartySheetProps {
   onRefresh: () => void;
 }
 
-type TabId = "overview" | "stash";
-
 export function PartySheetRoot(props: PartySheetProps) {
-  const [tab, setTab] = useState<TabId>("overview");
+  const [tab, setTab] = useState<SheetTabId>("overview");
   const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
 
   const onEmblemPick = useCallback(async () => {
@@ -60,26 +54,17 @@ export function PartySheetRoot(props: PartySheetProps) {
         onEmblemClick={onEmblemPick}
       />
 
-      <SheetTabs>
-        <TabButton
-          type="button"
-          $active={tab === "overview"}
-          onClick={() => setTab("overview")}
-        >
-          {localize("sheet.tabs.overview")}
-        </TabButton>
-        <TabButton
-          type="button"
-          $active={tab === "stash"}
-          onClick={() => setTab("stash")}
-        >
-          {localize("sheet.tabs.stash")}
-        </TabButton>
-      </SheetTabs>
-
-      <SheetBody>
+      <TabFrame
+        activeTab={tab}
+        onTabChange={setTab}
+        labels={{
+          overview: localize("sheet.tabs.overview"),
+          stash: localize("sheet.tabs.stash"),
+        }}
+        ariaLabel={localize("sheet.tabs.label")}
+      >
         {tab === "overview" ? (
-          <OverviewTab snapshot={props.snapshot} />
+          <OverviewTab folderId={props.folderId} snapshot={props.snapshot} />
         ) : (
           <StashTab
             snapshot={props.snapshot}
@@ -90,7 +75,7 @@ export function PartySheetRoot(props: PartySheetProps) {
             onRefresh={props.onRefresh}
           />
         )}
-      </SheetBody>
+      </TabFrame>
     </SheetInner>
   );
 }

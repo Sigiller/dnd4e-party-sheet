@@ -35,7 +35,6 @@ export function StashTab({ snapshot, stash, stashActorId, canEdit, canEditCurren
   return (
     <StashTabPanel ref={tabRef}>
       <PartyOverviewSidebar
-        title={localize("sheet.stash.partyOverview")}
         partyTotalGp={stash.partyTotalGp}
         stashLoad={stash.load}
         members={snapshot.members}

@@ -8,13 +8,14 @@ export const FoxInventoryStyles = createGlobalStyle`
     padding-top: 0.25em;
 
     h2.tab-title {
-      font-size: 1.5em;
+      font-size: 14px;
       text-transform: uppercase;
-      font-weight: 800;
-      color: #193d5e;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #053e62;
       padding: 0.1em 0.25em 0.25em 0;
-      line-height: 1;
-      text-shadow: -0.02em -0.02em #fff;
+      line-height: 1.2;
+      border: none;
       margin: 0 0 0.5em;
     }
 
@@ -194,7 +195,7 @@ export const FoxInventoryStyles = createGlobalStyle`
         }
 
         &:not(.power, .item, .hazard, .monster) thead {
-          background: #193d5e;
+          background: #053e62;
           color: #fff;
         }
 

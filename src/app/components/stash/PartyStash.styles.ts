@@ -1,71 +1,67 @@
 import styled from "styled-components";
 import { cardSurface } from "../../../styles/panel.js";
 
+/** Shell-less column of wealth cards (Figma "Stash Overview" 440:1156). */
 export const Sidebar = styled.aside.attrs({ className: "party-overview-sidebar" })`
-  flex: 0 0 200px;
-  width: 200px;
-  ${cardSurface}
-  padding: ${({ theme }) => theme.spacingGutter};
+  flex: 0 0 180px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   color: ${({ theme }) => theme.colourTextOnLight};
+`;
 
-  h3 {
-    margin: 0 0 0.5em;
-    font-size: 0.85em;
+export const WealthCard = styled.div`
+  ${cardSurface}
+  padding: 8px;
+
+  h4 {
+    margin: 0 0 2px;
+    font-size: 12px;
     font-weight: 700;
     color: ${({ theme }) => theme.colourHeading};
   }
 `;
 
-export const WealthCard = styled.div`
-  background: ${({ theme }) => theme.backgroundRowOdd};
-  color: ${({ theme }) => theme.colourTextOnLight};
-  padding: 0.5em;
-  margin-bottom: 0.5em;
-  border-radius: ${({ theme }) => theme.radiusBadge};
-
-  h4 {
-    margin: 0 0 0.25em;
-    font-size: 0.8em;
-    font-weight: 400;
-    color: ${({ theme }) => theme.colourTextInside};
-  }
-`;
-
 export const WealthGp = styled.p`
   margin: 0;
-  font-size: 1em;
+  font-size: 14px;
   font-weight: bold;
   color: inherit;
 `;
 
 export const LoadLine = styled.p`
-  margin: 0.25em 0 0;
-  font-size: 0.8em;
+  margin: 2px 0 0;
+  font-size: 10px;
   color: ${({ theme }) => theme.colourTextInside};
 `;
 
 export const MemberWealthCard = styled(WealthCard)`
   display: flex;
   flex-direction: row;
-  gap: 0.5em;
+  gap: 8px;
   align-items: flex-start;
 
   .thumb {
-    flex: 0 0 48px;
+    flex: 0 0 40px;
     align-self: flex-start;
-    width: 48px;
+    width: 40px;
     aspect-ratio: 1 / 1;
 
     img {
       display: block;
       width: 100%;
       height: 100%;
-      min-height: 48px;
+      min-height: 40px;
       object-fit: cover;
       object-position: top center;
-      border-radius: 6px;
-      border: 2px solid ${({ theme }) => theme.colourPcHead};
+      border-radius: ${({ theme }) => theme.radiusBadge};
+      border: 1px solid ${({ theme }) => theme.colourPcHead};
     }
+  }
+
+  .wealth-card-body {
+    min-width: 0;
   }
 `;
 

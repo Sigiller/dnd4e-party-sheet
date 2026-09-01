@@ -2,10 +2,22 @@ import type { MemberSummary } from "../../../party/party-data.js";
 import { ActorNameLink } from "../ActorNameLink.js";
 import { HpSurgeBar } from "./HpSurgeBar.js";
 import {
+  BadgeRow,
+  BottomRow,
+  DefenseCircle,
+  DefenseLabel,
+  DefensePip,
   DefencesRow,
+  InfoCol,
   MemberCard as Card,
   MemberSkills,
   MemberSubtitle,
+  NameBlock,
+  PortraitCol,
+  PortraitFrame,
+  SenseBadge,
+  SkillChip,
+  TopRow,
 } from "./MemberCard.styles.js";
 
 interface MemberCardProps {
@@ -13,62 +25,73 @@ interface MemberCardProps {
 }
 
 export function MemberCard({ member }: MemberCardProps) {
+  const defences = [
+    { key: "ac", label: "AC", value: member.defences.ac },
+    { key: "fort", label: "Fort", value: member.defences.fort },
+    { key: "ref", label: "Ref", value: member.defences.ref },
+    { key: "will", label: "Will", value: member.defences.wil },
+  ];
+
   return (
-    <Card>
-      <div className="member-portrait-col">
-        <div className="image-frame">
-          <img className="portrait profile-img" src={member.img} alt="" width={100} height={100} />
-        </div>
+    <Card data-testid="member-card">
+      <PortraitCol>
+        <PortraitFrame>
+          <img className="portrait profile-img" src={member.img} alt="" />
+        </PortraitFrame>
         <HpSurgeBar hp={member.hp} surges={member.surges} />
-      </div>
+      </PortraitCol>
 
-      <div className="member-stats-col flexcol">
-        <ActorNameLink actorId={member.id} variant="heading">
-          {member.name}
-        </ActorNameLink>
-        {member.subtitle ? <MemberSubtitle>{member.subtitle}</MemberSubtitle> : null}
-
-        <DefencesRow>
-          <div className="defences-block">
-            <span>AC {member.defences.ac}</span>
-            <span>
-              Fort {member.defences.fort} / Ref {member.defences.ref} / Will {member.defences.wil}
-            </span>
-          </div>
-          {member.senses.length > 0 ? (
-            <div className="senses-block">{member.senses.join(", ")}</div>
-          ) : null}
-          {member.effects.length > 0 ? (
-            <div className="effects-block flexrow">
-              {member.effects.map((ef, i) => (
-                <img
-                  key={`${ef.name}-${i}`}
-                  src={ef.img}
-                  alt=""
-                  width={28}
-                  height={28}
-                  data-tooltip={ef.name}
-                />
+      <InfoCol>
+        <TopRow>
+          <NameBlock>
+            <ActorNameLink actorId={member.id} variant="heading">
+              {member.name}
+            </ActorNameLink>
+            {member.subtitle ? <MemberSubtitle>{member.subtitle}</MemberSubtitle> : null}
+          </NameBlock>
+          {member.senses.length > 0 || member.effects.length > 0 ? (
+            <BadgeRow>
+              {member.effects.length > 0 ? (
+                <div className="effects-block">
+                  {member.effects.map((ef, i) => (
+                    <img
+                      key={`${ef.name}-${i}`}
+                      src={ef.img}
+                      alt=""
+                      width={28}
+                      height={28}
+                      data-tooltip={ef.name}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              {member.senses.map((sense) => (
+                <SenseBadge key={sense}>{sense}</SenseBadge>
               ))}
-            </div>
+            </BadgeRow>
           ) : null}
-        </DefencesRow>
+        </TopRow>
 
-        {member.trainedSkills.length > 0 ? (
-          <MemberSkills className="skill-list member-skills">
-            {member.trainedSkills.map((sk) => (
-              <li key={sk.key} className={`skill--block ${sk.key}`}>
-                <span className="skill-name">
-                  <span className="name">{sk.label}</span>{" "}
-                  <span className="bonus total">
-                    {sk.total >= 0 ? `+${sk.total}` : sk.total}
-                  </span>
-                </span>
-              </li>
+        <BottomRow>
+          <DefencesRow>
+            {defences.map((def) => (
+              <DefensePip key={def.key}>
+                <DefenseCircle>{def.value}</DefenseCircle>
+                <DefenseLabel>{def.label}</DefenseLabel>
+              </DefensePip>
             ))}
-          </MemberSkills>
-        ) : null}
-      </div>
+          </DefencesRow>
+          {member.trainedSkills.length > 0 ? (
+            <MemberSkills className="skill-list">
+              {member.trainedSkills.map((sk) => (
+                <SkillChip key={sk.key} className={`skill--block ${sk.key}`}>
+                  {sk.label} {sk.total >= 0 ? `+${sk.total}` : sk.total}
+                </SkillChip>
+              ))}
+            </MemberSkills>
+          ) : null}
+        </BottomRow>
+      </InfoCol>
     </Card>
   );
 }

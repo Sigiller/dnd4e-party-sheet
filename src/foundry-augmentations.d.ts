@@ -53,6 +53,7 @@ declare module "fvtt-types/configuration" {
     "dnd4e-party-sheet.partyFolderName": string;
     "dnd4e-party-sheet.allowPlayerStashCurrency": boolean;
     "dnd4e-party-sheet.stashChatLog": boolean;
+    "dnd4e-party-sheet.overviewCollapsed": Record<string, boolean>;
     "dnd4e-xp-award.partyFolderName": string;
     "dnd4e.itemDeleteConfirmation": boolean;
     "dnd4e.autoCollapseItemCards": boolean;

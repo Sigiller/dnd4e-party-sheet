@@ -60,7 +60,7 @@ export function PartyStashCurrency({
       <CurrencyCells>
         {rows.map((row, index) => (
           <Fragment key={row.key}>
-            {index > 0 ? <CurrencyDivider aria-hidden>|</CurrencyDivider> : null}
+            {index > 0 ? <CurrencyDivider aria-hidden /> : null}
             <CurrencyCell>
               <span>{row.value}</span>
               <i
@@ -76,17 +76,17 @@ export function PartyStashCurrency({
         <CurrencyActions>
           <CurrencyButton
             type="button"
-            data-tooltip={loc("addTitle")}
-            onClick={() => void handleAdd()}
-          >
-            <i className="fas fa-plus" />
-          </CurrencyButton>
-          <CurrencyButton
-            type="button"
             data-tooltip={loc("subtractTitle")}
             onClick={() => void handleSubtract()}
           >
             <i className="fas fa-minus" />
+          </CurrencyButton>
+          <CurrencyButton
+            type="button"
+            data-tooltip={loc("addTitle")}
+            onClick={() => void handleAdd()}
+          >
+            <i className="fas fa-plus" />
           </CurrencyButton>
         </CurrencyActions>
       ) : null}

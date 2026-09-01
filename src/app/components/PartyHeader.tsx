@@ -29,6 +29,13 @@ export function PartyHeader({ flags, partyLevel, onNameChange, onEmblemClick }: 
     <Header>
       <EmblemButton type="button" onClick={onEmblemClick} title={localize("sheet.emblem")}>
         <img src={flags.emblem || "icons/svg/castle.svg"} alt="" width={64} height={64} />
+        {/* Plaque frame from Figma node 440:1079: 1px line with bottom-corner scoops */}
+        <svg width="58" height="63" viewBox="0 0 58 63" fill="none" aria-hidden="true">
+          <path
+            d="M57.5 0.5V57C54.4 57 52 59.4 52 62.5H6C6 59.4 3.6 57 0.5 57V0.5Z"
+            stroke="#76694e"
+          />
+        </svg>
       </EmblemButton>
       <div className="party-title-block flexcol">
         <NameInput

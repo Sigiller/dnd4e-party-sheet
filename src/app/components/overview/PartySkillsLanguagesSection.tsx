@@ -1,89 +1,57 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { MODULE_ID } from "../../../constants.js";
 import { localize as loc } from "../../../i18n.js";
 import type { PartySnapshot } from "../../../party/party-data.js";
+import { isOverviewCollapsed, setOverviewCollapsed } from "../../../settings.js";
 import { PartyLanguages } from "../languages/PartyLanguages.js";
-import { PartySkills } from "../skills/PartySkills.js";
-import {
-  IconButton,
-  OverviewSubContent,
-  OverviewSubSection,
-  OverviewSubTabs,
-  SubTabCell,
-  SubTabHitArea,
-  SubTabIconGroup,
-} from "../../../styles/sheetLayout.js";
+import { SkillsTable } from "../skills/SkillsTable.js";
+import { SkillsBlock } from "../skills/PartySkills.styles.js";
+import { CollapseDivider } from "./CollapseDivider.js";
+import { OverviewSubSection, SectionHeading } from "../../../styles/sheetLayout.js";
 
 interface PartySkillsLanguagesSectionProps {
-  snapshot: Pick<PartySnapshot, "skillsCompact" | "skillsDetailed" | "languages">;
+  folderId: string;
+  snapshot: Pick<PartySnapshot, "skillsDetailed" | "languages">;
 }
 
-type SubTabId = "skills" | "languages";
-type SkillsMode = "compact" | "detailed";
-
-export function PartySkillsLanguagesSection({ snapshot }: PartySkillsLanguagesSectionProps) {
-  const [subTab, setSubTab] = useState<SubTabId>("skills");
-  const [skillsMode, setSkillsMode] = useState<SkillsMode>("compact");
+export function PartySkillsLanguagesSection({
+  folderId,
+  snapshot,
+}: PartySkillsLanguagesSectionProps) {
   const localize = (key: string) => loc(`${MODULE_ID}.${key}`);
+  const [expanded, setExpanded] = useState(() => !isOverviewCollapsed(folderId));
+  const contentId = useId();
 
-  const toggleSkillsMode = () => {
-    setSubTab("skills");
-    setSkillsMode((mode) => (mode === "compact" ? "detailed" : "compact"));
+  const toggle = () => {
+    setExpanded((prev) => {
+      setOverviewCollapsed(folderId, prev);
+      return !prev;
+    });
   };
-
-  const skillsModeIcon =
-    skillsMode === "compact" ? "fas fa-th-large" : "fas fa-table";
-  const skillsModeLabel = localize(
-    skillsMode === "compact" ? "sheet.skills.compact" : "sheet.skills.detailed"
-  );
 
   return (
     <OverviewSubSection>
-      <OverviewSubTabs>
-        <SubTabCell>
-          <SubTabHitArea
-            type="button"
-            $active={subTab === "skills"}
-            $centered
-            $withIcon
-            onClick={() => setSubTab("skills")}
-          >
-            {localize("sheet.skills.title")}
-          </SubTabHitArea>
-          <SubTabIconGroup>
-            <IconButton
-              type="button"
-              data-tooltip={skillsModeLabel}
-              aria-label={skillsModeLabel}
-              onClick={toggleSkillsMode}
-            >
-              <i className={skillsModeIcon} />
-            </IconButton>
-          </SubTabIconGroup>
-        </SubTabCell>
-        <SubTabCell>
-          <SubTabHitArea
-            type="button"
-            $active={subTab === "languages"}
-            $centered
-            onClick={() => setSubTab("languages")}
-          >
-            {localize("sheet.languages.title")}
-          </SubTabHitArea>
-        </SubTabCell>
-      </OverviewSubTabs>
-
-      <OverviewSubContent>
-        {subTab === "skills" ? (
-          <PartySkills
-            mode={skillsMode}
-            compact={snapshot.skillsCompact}
-            detailed={snapshot.skillsDetailed}
-          />
-        ) : (
+      {expanded ? (
+        <div id={contentId}>
+          <SectionHeading>{localize("sheet.skills.title")}</SectionHeading>
+          <SkillsBlock>
+            <SkillsTable detailed={snapshot.skillsDetailed} />
+          </SkillsBlock>
+          <SectionHeading>{localize("sheet.languages.title")}</SectionHeading>
           <PartyLanguages languages={snapshot.languages} />
-        )}
-      </OverviewSubContent>
+        </div>
+      ) : (
+        <SectionHeading id={contentId}>
+          {localize("sheet.skillsLanguages.title")}
+        </SectionHeading>
+      )}
+      <CollapseDivider
+        expanded={expanded}
+        onToggle={toggle}
+        collapseLabel={localize("sheet.skillsLanguages.collapse")}
+        expandLabel={localize("sheet.skillsLanguages.expand")}
+        controlsId={contentId}
+      />
     </OverviewSubSection>
   );
 }
