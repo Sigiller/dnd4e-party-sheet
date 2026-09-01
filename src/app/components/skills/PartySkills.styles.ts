@@ -5,6 +5,7 @@ export const SkillsBlock = styled.div.attrs({ className: "party-skills-block" })
   width: 100%;
   overflow-x: auto;
   ${textOnLightSurface}
+  margin-bottom: 12px;
 `;
 
 export const SkillsTable = styled.table.attrs({ className: "skills" })`

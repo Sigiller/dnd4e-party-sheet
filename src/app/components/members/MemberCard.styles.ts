@@ -160,6 +160,7 @@ export const DefenseCircle = styled.span`
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -1.4px;
+  padding-right: 2px;
 
   && {
     color: ${({ theme }) => theme.colourPrimary700};
@@ -212,6 +213,7 @@ export const SkillChip = styled.li`
   line-height: 1.2;
   text-transform: uppercase;
   white-space: nowrap;
+  margin: 0;
 
   && {
     color: ${({ theme }) => theme.vitalsGoldLight};

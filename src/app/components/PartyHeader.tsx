@@ -37,15 +37,13 @@ export function PartyHeader({ flags, partyLevel, onNameChange, onEmblemClick }: 
           />
         </svg>
       </EmblemButton>
-      <div className="party-title-block flexcol">
-        <NameInput
-          type="text"
-          value={name}
-          placeholder={localize("sheet.partyName")}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => onNameChange(name)}
-        />
-      </div>
+      <NameInput
+        type="text"
+        value={name}
+        placeholder={localize("sheet.partyName")}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={() => onNameChange(name)}
+      />
       <LevelBlock>
         <LevelLabel>{localize("sheet.partyLevel")}</LevelLabel>
         <LevelValue>{partyLevel}</LevelValue>

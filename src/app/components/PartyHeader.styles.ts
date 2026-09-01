@@ -10,10 +10,10 @@ export const Header = styled.header.attrs({ className: "party-sheet-header" })`
   flex: 0 0 auto;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 15px;
   height: 105px;
-  padding: 0 30px 0 31px;
+  padding: 0 30px 34px 31px;
   background-color: ${({ theme }) => theme.colourPcHead};
   background-image:
     radial-gradient(386px 41px at 225px 37px, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 100%),
@@ -50,7 +50,7 @@ export const EmblemButton = styled.button`
   }
 `;
 
-export const NameInput = styled.input`
+export const NameInput = styled.input.attrs({ className: "party-title-block" })`
   flex: 1 1 auto;
   min-width: 120px;
   font-family: ${({ theme }) => theme.fontFamilyHead};
@@ -62,6 +62,7 @@ export const NameInput = styled.input`
   background: transparent;
   border: 1px solid transparent;
   padding: 0.15em 0.3em;
+  align-self: center;
 
   &:hover,
   &:focus {
@@ -75,6 +76,7 @@ export const LevelBlock = styled.div`
   margin-left: auto;
   flex: 0 0 auto;
   text-align: right;
+  align-self: center;
 `;
 
 export const LevelLabel = styled.span`
