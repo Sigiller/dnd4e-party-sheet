@@ -60,21 +60,27 @@ function detailsLine(actor: Actor.Implementation): string {
 
 function getSenseLabels(actor: Actor.Implementation): string[] {
   const senses = getDnd4eSystem(actor).senses;
-  const special = senses?.special;
-  if (!special) return [];
-  const config = CONFIG.DND4E.special;
-  const values = Array.isArray(special.value) ? special.value : special.value ? [special.value] : [];
+  if (!senses) return [];
+
+  const config = CONFIG.DND4E.senses ?? {};
   const labels: string[] = [];
-  for (const key of values) {
-    const label = config[key];
-    if (label) labels.push(localize(label));
+
+  for (const [key, sense] of Object.entries(senses.special ?? {})) {
+    const label = config[key]?.label;
+    if (!sense?.value || !label) continue;
+    const range = Number(sense.range);
+    const text = localize(label);
+    labels.push(Number.isFinite(range) && range > 0 ? `${text} ${range}` : text);
   }
-  if (special.custom) {
-    special.custom.split(";").forEach((c) => {
-      const t = c.trim();
-      if (t) labels.push(t);
-    });
+
+  if (senses.allAround) labels.push(localize("DND4E.SpecialSensesAA"));
+  if (senses.blind) labels.push(localize("DND4E.VisionBlind"));
+
+  for (const part of (senses.custom ?? "").split(";")) {
+    const trimmed = part.trim();
+    if (trimmed) labels.push(trimmed);
   }
+
   return labels;
 }
 

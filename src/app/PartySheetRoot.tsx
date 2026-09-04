@@ -15,6 +15,7 @@ export interface PartySheetProps {
   stashActorId: string;
   canEdit: boolean;
   canEditCurrency: boolean;
+  canEditParty: boolean;
   snapshot: PartySnapshot;
   stash: {
     sections: InventorySection[];
@@ -50,6 +51,7 @@ export function PartySheetRoot(props: PartySheetProps) {
       <PartyHeader
         flags={props.flags}
         partyLevel={props.snapshot.partyLevel}
+        canEdit={props.canEditParty}
         onNameChange={(displayName) => props.onUpdateFlags({ displayName })}
         onEmblemClick={onEmblemPick}
       />

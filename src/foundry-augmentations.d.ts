@@ -26,7 +26,7 @@ declare global {
       skills: Record<string, { label?: string }>;
       spoken: Record<string, string>;
       script: Record<string, string>;
-      special: Record<string, string>;
+      senses: Record<string, { label?: string }>;
       inventoryTypes: Record<string, { label: string }>;
       trainingLevels: Record<number, string>;
     };

@@ -67,14 +67,17 @@ function shouldRefreshPartySheet(doc: Actor.Implementation | Item.Implementation
   return false;
 }
 
-Hooks.on("updateActor", (doc: Actor.Implementation) => {
+function refreshIfRelevant(doc: Actor.Implementation | Item.Implementation): void {
   if (shouldRefreshPartySheet(doc)) schedulePartySheetRefresh();
-});
+}
 
-Hooks.on("updateItem", (doc: Item.Implementation) => {
-  if (shouldRefreshPartySheet(doc)) schedulePartySheetRefresh();
-});
+Hooks.on("createActor", refreshIfRelevant);
+Hooks.on("updateActor", refreshIfRelevant);
+Hooks.on("deleteActor", refreshIfRelevant);
+Hooks.on("createItem", refreshIfRelevant);
+Hooks.on("updateItem", refreshIfRelevant);
+Hooks.on("deleteItem", refreshIfRelevant);
 
-Hooks.on("deleteItem", (doc: Item.Implementation) => {
-  if (shouldRefreshPartySheet(doc)) schedulePartySheetRefresh();
+Hooks.on("updateFolder", (folder: Folder.Implementation) => {
+  if (folder.type === "Actor") schedulePartySheetRefresh();
 });

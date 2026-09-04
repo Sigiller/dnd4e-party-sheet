@@ -14,11 +14,11 @@ const { ApplicationV2 } = foundry.applications.api;
 
 let activeSheet: PartySheetApp | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+let openInFlight: Promise<void> | null = null;
 
 export class PartySheetApp extends ApplicationV2 {
   folderId: string;
   #props: PartySheetProps | null = null;
-  #pendingProps: PartySheetProps | null = null;
 
   constructor(folderId: string) {
     super();
@@ -51,7 +51,7 @@ export class PartySheetApp extends ApplicationV2 {
     if (!ctx) throw new Error("Party folder not found");
 
     const snapshot = await buildPartySnapshot(ctx.folder.id ?? this.folderId);
-    const inventory = await prepareInventorySections(ctx.stashActor);
+    const inventory = prepareInventorySections(ctx.stashActor);
     const stashLoad = computeStashLoad(ctx.stashActor);
     const stashGp = currencyToGp(readStashCurrency(ctx.stashActor));
     const membersGp = snapshot.members.reduce((s, m) => s + m.gp, 0);
@@ -64,6 +64,8 @@ export class PartySheetApp extends ApplicationV2 {
       stashActorId,
       canEdit: canEditStash(ctx.stashActor),
       canEditCurrency: canEditStashCurrency(ctx.stashActor),
+      // Party name and emblem live on the Folder, which only a GM may update.
+      canEditParty: Boolean(game.user?.isGM),
       snapshot,
       stash: {
         sections: inventory,
@@ -111,7 +113,6 @@ export class PartySheetApp extends ApplicationV2 {
   async refreshData(): Promise<void> {
     if (!this.rendered) return;
     const props = await this.#buildProps();
-    this.#props = props;
     const root = this.element?.querySelector(".party-sheet-react-root");
     if (root instanceof HTMLElement) {
       mountPartySheet(root, props);
@@ -140,17 +141,13 @@ export class PartySheetApp extends ApplicationV2 {
       await this.refreshData();
       return this;
     }
-    this.#pendingProps = await this.#buildProps();
     return super.render(options);
   }
 
   protected override async _onRender(_context: object, options: unknown): Promise<void> {
     // @ts-expect-error ApplicationV2._onRender accepts DeepPartial render options at runtime.
     await super._onRender(_context, options);
-    const props =
-      this.#pendingProps ??
-      (this.#props ?? (await this.#buildProps()));
-    this.#pendingProps = null;
+    const props = this.#props ?? (await this.#buildProps());
     const root = this.element?.querySelector(".party-sheet-react-root");
     if (root instanceof HTMLElement) {
       mountPartySheet(root, props);
@@ -158,7 +155,7 @@ export class PartySheetApp extends ApplicationV2 {
   }
 
   protected override async _onClose(options: unknown): Promise<void> {
-    unmountPartySheet();
+    unmountPartySheet(this.element ?? undefined);
     if (activeSheet === this) activeSheet = null;
     // @ts-expect-error ApplicationV2._onClose accepts DeepPartial render options at runtime.
     await super._onClose(options);
@@ -166,6 +163,14 @@ export class PartySheetApp extends ApplicationV2 {
 }
 
 export async function openPartySheet(folderId?: string): Promise<void> {
+  // A second click must not start a second sheet while the first is still building its props.
+  openInFlight ??= openPartySheetOnce(folderId).finally(() => {
+    openInFlight = null;
+  });
+  return openInFlight;
+}
+
+async function openPartySheetOnce(folderId?: string): Promise<void> {
   const ctx = await resolvePartyContext(folderId);
   if (!ctx) {
     ui.notifications?.warn(

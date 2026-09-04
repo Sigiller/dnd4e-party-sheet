@@ -11,7 +11,7 @@ export function useStashDragDrop(
 ): void {
   useEffect(() => {
     const el = tabRef.current;
-    if (!el || !canEdit) return;
+    if (!el) return;
 
     const stashActor = getGameActors()?.get(stashActorId);
     if (!stashActor) return;
@@ -64,9 +64,8 @@ export function useStashDragDrop(
       },
     });
 
+    // Re-binding with the current permissions is also how handlers get cleared:
+    // DragDrop.bind nulls every handler and unsets draggable when canEdit is false.
     dragDrop.bind(el);
-    return () => {
-      /* DragDrop has no unbind in all versions; re-render replaces DOM */
-    };
   }, [tabRef, stashActorId, canEdit, onItemsChanged]);
 }

@@ -31,7 +31,9 @@ export function mountPartySheet(element: HTMLElement, props: PartySheetProps): v
   );
 }
 
-export function unmountPartySheet(): void {
+/** Passing an owner element only unmounts when the mounted host still lives inside it. */
+export function unmountPartySheet(owner?: HTMLElement): void {
+  if (owner && host && !owner.contains(host)) return;
   root?.unmount();
   root = null;
   host = null;

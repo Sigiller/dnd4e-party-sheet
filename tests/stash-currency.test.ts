@@ -49,7 +49,7 @@ describe("applySubtractByGpSum", () => {
     assert.equal(result.currency.cp, 75);
   });
 
-  it("spends cp before gp", () => {
+  it("spends cp before gp and returns the change", () => {
     const result = applySubtractByGpSum(
       { cp: 5, sp: 0, gp: 10, pp: 0, ad: 0 },
       1.04,
@@ -57,8 +57,32 @@ describe("applySubtractByGpSum", () => {
     );
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    assert.equal(result.currency.cp, 0);
     assert.equal(result.currency.gp, 9);
+    assert.equal(result.currency.cp, 1);
+  });
+
+  it("gives change instead of destroying the broken coin's value", () => {
+    const result = applySubtractByGpSum(
+      { cp: 0, sp: 0, gp: 0, pp: 1, ad: 0 },
+      1,
+      getRate
+    );
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.currency.pp, 0);
+    assert.equal(result.currency.gp, 99);
+  });
+
+  it("prefers an exact coin over consuming cheaper ones", () => {
+    const result = applySubtractByGpSum(
+      { cp: 0, sp: 9, gp: 2, pp: 0, ad: 0 },
+      1,
+      getRate
+    );
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.currency.sp, 9);
+    assert.equal(result.currency.gp, 1);
   });
 
   it("uses one gp coin when cp cannot cover remainder", () => {

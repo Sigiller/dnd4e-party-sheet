@@ -1,7 +1,13 @@
-import { useRef, useState, type MouseEvent } from "react";
-import type { InventoryRow, InventorySection } from "../../../party/inventory-prep.js";
+import { useEffect, useState, type MouseEvent } from "react";
+import { MODULE_ID } from "../../../constants.js";
+import {
+  loadItemDescriptionHtml,
+  type InventoryRow,
+  type InventorySection,
+} from "../../../party/inventory-prep.js";
 import { localize } from "../../../i18n.js";
 import { deleteStashItem, editStashItem } from "../../../party/stash-item-controls.js";
+import { getGameActors } from "../../../types/dnd4e.js";
 import { StashInventoryRoot } from "./PartyStash.styles.js";
 
 interface PartyStashInventoryProps {
@@ -44,9 +50,13 @@ function ItemControlsRow({
   const handleDelete = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    void deleteStashItem(stashActorId, itemId).then((deleted) => {
-      if (deleted) onItemsChanged();
-    });
+    void deleteStashItem(stashActorId, itemId)
+      .then((deleted) => {
+        if (deleted) onItemsChanged();
+      })
+      .catch((error: unknown) => {
+        console.error(`${MODULE_ID} | stash item delete failed`, error);
+      });
   };
 
   return (
@@ -130,6 +140,7 @@ function InventoryItemRow({
   stashActorId,
   onItemsChanged,
   isExpanded,
+  descriptionHtml,
   onToggleExpanded,
 }: {
   section: InventorySection;
@@ -138,6 +149,7 @@ function InventoryItemRow({
   stashActorId: string;
   onItemsChanged: () => void;
   isExpanded: boolean;
+  descriptionHtml: string;
   onToggleExpanded: (id: string) => void;
 }) {
   const type = section.id;
@@ -206,7 +218,7 @@ function InventoryItemRow({
         <div className="wrapper">
           <div
             className="card-content"
-            dangerouslySetInnerHTML={{ __html: item.descriptionHtml }}
+            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
           />
         </div>
       </div>
@@ -221,8 +233,8 @@ export function PartyStashInventory({
   title,
   onItemsChanged,
 }: PartyStashInventoryProps) {
-  const listRef = useRef<HTMLUListElement>(null);
   const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(() => new Set());
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItemIds((prev) => {
@@ -233,11 +245,35 @@ export function PartyStashInventory({
     });
   };
 
+  // Only expanded rows pay for description enrichment, and they re-enrich when the
+  // stash is rebuilt so an edited item does not keep showing stale HTML.
+  useEffect(() => {
+    const stashActor = getGameActors()?.get(stashActorId);
+    if (!stashActor) return;
+
+    let cancelled = false;
+    const ids = [...expandedItemIds];
+
+    void Promise.all(
+      ids.map(async (id) => [id, await loadItemDescriptionHtml(stashActor, id)] as const)
+    )
+      .then((entries) => {
+        if (!cancelled) setDescriptions(Object.fromEntries(entries));
+      })
+      .catch((error: unknown) => {
+        console.error(`${MODULE_ID} | stash item description failed to load`, error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sections, expandedItemIds, stashActorId]);
+
   return (
     <StashInventoryRoot className="party-stash-inventory party-fox-inventory-host">
       <div className="tab inventory active" data-group="primary" data-tab="inventory">
         <h2 className="tab-title">{title}</h2>
-        <ul className="item-list gear" ref={listRef}>
+        <ul className="item-list gear">
           {sections.map((section) => (
             <li key={section.id} className={`item-group ${section.id}`}>
               <SectionHeader section={section} canEdit={canEdit} />
@@ -251,6 +287,7 @@ export function PartyStashInventory({
                     stashActorId={stashActorId}
                     onItemsChanged={onItemsChanged}
                     isExpanded={expandedItemIds.has(item.id)}
+                    descriptionHtml={descriptions[item.id] ?? ""}
                     onToggleExpanded={toggleExpanded}
                   />
                 ))}

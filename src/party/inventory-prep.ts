@@ -24,16 +24,13 @@ export interface InventoryRow {
   level: number | null;
   price: number | string | null;
   slotLabel: string;
-  descriptionHtml: string;
 }
 
 type ItemWithChatData = Dnd4eItem & {
   getChatData?: (htmlOptions?: object) => Promise<{ description?: { value?: string } }>;
 };
 
-export async function prepareInventorySections(
-  actor: Actor.Implementation
-): Promise<InventorySection[]> {
+export function prepareInventorySections(actor: Actor.Implementation): InventorySection[] {
   const inventoryTypes = CONFIG.DND4E.inventoryTypes;
   const sections: Record<string, InventorySection> = {};
 
@@ -46,15 +43,9 @@ export async function prepareInventorySections(
     };
   }
 
-  const topLevel = actor.items.filter((item) => !getDnd4eItemSystem(item).container);
-
-  const actorWithOwner = actor as Actor.Implementation & { isOwner?: boolean };
-  const htmlOptions = { secrets: actorWithOwner.isOwner ?? false, relativeTo: actor };
-
-  for (const item of topLevel) {
-    const itemType = String(item.type);
-    if (!Object.keys(inventoryTypes).includes(itemType)) continue;
-    sections[itemType]?.items.push(await itemToRow(item, htmlOptions));
+  for (const item of actor.items) {
+    if (getDnd4eItemSystem(item).container) continue;
+    sections[String(item.type)]?.items.push(itemToRow(item));
   }
 
   for (const section of Object.values(sections)) {
@@ -66,17 +57,24 @@ export async function prepareInventorySections(
     .filter((section): section is InventorySection => section != null);
 }
 
-async function itemToRow(
-  item: Item.Implementation,
-  htmlOptions: { secrets: boolean; relativeTo: Actor.Implementation }
-): Promise<InventoryRow> {
-  let descriptionHtml = "";
-  const getChatData = (item as ItemWithChatData).getChatData;
-  if (typeof getChatData === "function") {
-    const chatData = await getChatData.call(item, htmlOptions);
-    descriptionHtml = chatData?.description?.value ?? "";
-  }
+/** Enriching descriptions is expensive, so only the row the user expands pays for it. */
+export async function loadItemDescriptionHtml(
+  actor: Actor.Implementation,
+  itemId: string
+): Promise<string> {
+  const item = actor.items.get(itemId);
+  const getChatData = (item as ItemWithChatData | undefined)?.getChatData;
+  if (!item || typeof getChatData !== "function") return "";
 
+  const actorWithOwner = actor as Actor.Implementation & { isOwner?: boolean };
+  const chatData = await getChatData.call(item, {
+    secrets: actorWithOwner.isOwner ?? false,
+    relativeTo: actor,
+  });
+  return chatData?.description?.value ?? "";
+}
+
+function itemToRow(item: Item.Implementation): InventoryRow {
   const system = getDnd4eItemSystem(item);
   const dnd4eItem = item as Dnd4eItem;
   const qty = Number(system.quantity) || 0;
@@ -103,7 +101,6 @@ async function itemToRow(
     level: levelRaw != null && levelRaw !== "" ? Number(levelRaw) : null,
     price: system.price ?? null,
     slotLabel: formatItemSlot(item),
-    descriptionHtml,
   };
 }
 

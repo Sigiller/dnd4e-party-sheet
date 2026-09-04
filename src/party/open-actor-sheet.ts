@@ -123,33 +123,34 @@ export function activateActorSheetTab(
   }
 }
 
+const TAB_ACTIVATION_ATTEMPTS = 3;
+
+function deferFrame(callback: () => void): void {
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => callback());
+  else setTimeout(callback, 0);
+}
+
 function scheduleActorSheetTabActivation(
   sheet: SheetLike,
   actorId: string,
   tab: string,
   group: string
 ): void {
+  let remaining = TAB_ACTIVATION_ATTEMPTS;
+
+  // The request is one-shot: drop it once it lands or once the attempts run out,
+  // so a sheet whose DOM never matches is not dragged to this tab on every later render.
   const attempt = () => {
     activateActorSheetTab(sheet, tab, group);
-    if (isActorSheetTabActive(sheet, tab, group)) {
+    remaining -= 1;
+    if (isActorSheetTabActive(sheet, tab, group) || remaining <= 0) {
       clearActorSheetTab(actorId);
+      return;
     }
+    deferFrame(attempt);
   };
 
-  const defer =
-    typeof requestAnimationFrame === "function"
-      ? requestAnimationFrame.bind(globalThis)
-      : (callback: FrameRequestCallback) => setTimeout(() => callback(0), 0);
-
-  defer(() => {
-    attempt();
-    if (!pendingActorSheetTabs.has(actorId)) return;
-    defer(() => {
-      attempt();
-      if (!pendingActorSheetTabs.has(actorId)) return;
-      setTimeout(attempt, 0);
-    });
-  });
+  deferFrame(attempt);
 }
 
 export function applyPendingActorSheetTab(sheet: SheetLike): void {

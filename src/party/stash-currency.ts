@@ -140,42 +140,65 @@ export function applySubtractByGpSum(
   gpTotal: number,
   getRate: (key: string) => number = getGpRate
 ): { ok: true; currency: CurrencyRecord } | { ok: false } {
-  const targetCp = Math.max(0, Math.round(gpTotal * 100));
-  if (targetCp <= 0) {
-    return { ok: true, currency: normalizeCurrencyRecord(currency) };
-  }
-
   const next = normalizeCurrencyRecord(currency);
-  let remainingCp = targetCp;
+  const targetCp = Math.max(0, Math.round(gpTotal * 100));
+  if (targetCp <= 0) return { ok: true, currency: next };
 
-  for (const key of GP_SUBTRACT_ORDER) {
+  const cheapestFirst = GP_SUBTRACT_ORDER.map((key) => ({ key, cp: coinValueInCp(key, getRate) }))
+    .filter((coin) => coin.cp > 0)
+    .sort((a, b) => a.cp - b.cp);
+
+  let remainingCp = targetCp;
+  for (const coin of cheapestFirst) {
     if (remainingCp <= 0) break;
-    const coinCp = coinValueInCp(key, getRate);
-    if (coinCp <= 0) continue;
-    const available = next[key] ?? 0;
-    const coinsToRemove = Math.min(available, Math.floor(remainingCp / coinCp));
-    if (coinsToRemove > 0) {
-      next[key] = available - coinsToRemove;
-      remainingCp -= coinsToRemove * coinCp;
-    }
+    const spend = Math.min(next[coin.key] ?? 0, Math.floor(remainingCp / coin.cp));
+    next[coin.key] = (next[coin.key] ?? 0) - spend;
+    remainingCp -= spend * coin.cp;
   }
 
   if (remainingCp > 0) {
-    for (const key of GP_SUBTRACT_ORDER) {
-      const coinCp = coinValueInCp(key, getRate);
-      if (coinCp <= 0) continue;
-      const available = next[key] ?? 0;
-      const needCoins = Math.ceil(remainingCp / coinCp);
-      if (needCoins > 0 && needCoins <= available) {
-        next[key] = available - needCoins;
-        remainingCp -= needCoins * coinCp;
-        break;
-      }
+    // Nothing left is small enough to pay exactly: break one bigger coin and take the change.
+    const broken = cheapestFirst.find((coin) => coin.cp > remainingCp && (next[coin.key] ?? 0) > 0);
+    if (!broken) return { ok: false };
+
+    next[broken.key] = (next[broken.key] ?? 0) - 1;
+    let changeCp = broken.cp - remainingCp;
+    remainingCp = 0;
+
+    for (const coin of [...cheapestFirst].reverse()) {
+      const coins = Math.floor(changeCp / coin.cp);
+      next[coin.key] = (next[coin.key] ?? 0) + coins;
+      changeCp -= coins * coin.cp;
     }
   }
 
-  if (remainingCp > 0) return { ok: false };
   return { ok: true, currency: next };
+}
+
+/** Per-coin dot paths so a concurrent update to a different coin is not overwritten. */
+function changedCurrencyPaths(
+  before: CurrencyRecord,
+  after: CurrencyRecord,
+  prefix: string
+): Record<string, number> {
+  const paths: Record<string, number> = {};
+  for (const [key, value] of Object.entries(after)) {
+    if (Number(before[key] ?? 0) !== value) paths[`${prefix}.${key}`] = value;
+  }
+  return paths;
+}
+
+async function writeStashCurrency(
+  stashActor: Actor.Implementation,
+  before: { currency: CurrencyRecord; ritualcomp: CurrencyRecord },
+  after: { currency: CurrencyRecord; ritualcomp: CurrencyRecord }
+): Promise<void> {
+  const paths = {
+    ...changedCurrencyPaths(before.currency, after.currency, "system.currency"),
+    ...changedCurrencyPaths(before.ritualcomp, after.ritualcomp, "system.ritualcomp"),
+  };
+  if (Object.keys(paths).length === 0) return;
+  await updateActorData(stashActor, paths);
 }
 
 export async function addStashCurrency(
@@ -186,10 +209,11 @@ export async function addStashCurrency(
   const currency = readStashCurrency(stashActor);
   const ritualcomp = readRitualcomp(stashActor);
   const { currency: nextCurrency, ritualcomp: nextRitual } = applyAdd(currency, ritualcomp, deltas);
-  await updateActorData(stashActor, {
-    "system.currency": nextCurrency,
-    "system.ritualcomp": nextRitual,
-  });
+  await writeStashCurrency(
+    stashActor,
+    { currency, ritualcomp },
+    { currency: nextCurrency, ritualcomp: nextRitual }
+  );
   await logCurrencyAdded(game.user?.character ?? null, deltas);
 }
 
@@ -202,10 +226,11 @@ export async function subtractStashCurrencyExact(
   const ritualcomp = readRitualcomp(stashActor);
   const result = applySubtractExact(currency, ritualcomp, deltas);
   if (!result.ok) return { ok: false };
-  await updateActorData(stashActor, {
-    "system.currency": result.currency,
-    "system.ritualcomp": result.ritualcomp,
-  });
+  await writeStashCurrency(
+    stashActor,
+    { currency, ritualcomp },
+    { currency: result.currency, ritualcomp: result.ritualcomp }
+  );
   await logCurrencyRemoved(game.user?.character ?? null, deltas);
   return { ok: true };
 }
@@ -219,10 +244,11 @@ export async function subtractStashCurrencyByGp(
   const ritualcomp = readRitualcomp(stashActor);
   const result = applySubtractByGpSum(currency, gpTotal);
   if (!result.ok) return { ok: false };
-  await updateActorData(stashActor, {
-    "system.currency": result.currency,
-    "system.ritualcomp": normalizeRitualcompRecord(ritualcomp),
-  });
+  await writeStashCurrency(
+    stashActor,
+    { currency, ritualcomp },
+    { currency: result.currency, ritualcomp: normalizeRitualcompRecord(ritualcomp) }
+  );
   await logCurrencyRemovedByGp(game.user?.character ?? null, gpTotal);
   return { ok: true };
 }

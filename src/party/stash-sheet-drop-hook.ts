@@ -120,12 +120,28 @@ function patchSheetClassesDirectly(ActorSheet4e: ActorSheet4eClass): void {
   visit(ActorSheet4e);
 }
 
+/** The dnd4e sheet module path is system-internal, so a rename must not break module startup. */
+async function loadActorSheet4eClass(): Promise<ActorSheet4eClass | null> {
+  try {
+    const loaded = (await import(
+      // @ts-expect-error Foundry resolves /systems/... paths at runtime only.
+      "/systems/dnd4e/module/applications/sheets/actor-sheet.mjs"
+    )) as { default?: ActorSheet4eClass };
+    return loaded.default ?? null;
+  } catch (error) {
+    console.error(
+      `${MODULE_ID} | stash drop: could not load the dnd4e actor sheet class; stash-to-sheet drops fall back to the system handler.`,
+      error
+    );
+    return null;
+  }
+}
+
 /** Intercept dnd4e actor sheet item drops so stash transfers do not also run default _onDropItemCreate. */
 export async function registerStashActorSheetDropHook(): Promise<void> {
-  const { default: ActorSheet4e } = (await import(
-    // @ts-expect-error Foundry resolves /systems/... paths at runtime only.
-    "/systems/dnd4e/module/applications/sheets/actor-sheet.mjs"
-  )) as { default: ActorSheet4eClass };
+  const ActorSheet4e = await loadActorSheet4eClass();
+  if (!ActorSheet4e) return;
+
   const lw = (globalThis as { libWrapper?: typeof libWrapper }).libWrapper;
   const targets = getActorSheet4eMethodTargets(ActorSheet4e, "_onDropItem");
   let registered = 0;

@@ -97,23 +97,20 @@ async function removeItemFromActor(actor: Actor.Implementation, itemId: string):
   await doc.delete();
 }
 
-export async function transferItemToActor(
+function clampTransferQuantity(quantity: number, maxQuantity: number): number {
+  return Math.min(Math.max(1, Math.floor(quantity)), maxQuantity);
+}
+
+async function createItemCopyOnActor(
   item: Item.Implementation,
   targetActor: Actor.Implementation,
-  quantity: number
+  qty: number,
+  maxQty: number,
+  keepId: boolean
 ): Promise<Item.Implementation | null> {
-  const sourceActor = item.actor;
-  if (!sourceActor) return null;
-
   const ItemClass = getItemClass();
-  const maxQty = getItemStackQuantity(getDnd4eItemSystem(item).quantity);
-  const qty = Math.min(Math.max(1, Math.floor(quantity)), maxQty);
-  const fullStack = qty >= maxQty;
-  const crossActor = sourceActor.id !== targetActor.id;
-  const sourceItemId = item.id ?? "";
-
   const transformFirst = (source: Item.Implementation) =>
-    fullStack ? itemToData(source) : setItemQuantity(itemToData(source), qty);
+    qty >= maxQty ? itemToData(source) : setItemQuantity(itemToData(source), qty);
 
   const toCreate =
     typeof ItemClass.createWithContents === "function"
@@ -124,21 +121,38 @@ export async function transferItemToActor(
 
   if (!toCreate?.length) return null;
 
-  const created = await createItemDocuments(toCreate, {
-    parent: targetActor,
-    keepId: crossActor ? false : true,
-  });
+  const created = await createItemDocuments(toCreate, { parent: targetActor, keepId });
+  return created[0] ?? null;
+}
 
-  if (fullStack) {
-    await removeItemFromActor(sourceActor, sourceItemId);
+export async function transferItemToActor(
+  item: Item.Implementation,
+  targetActor: Actor.Implementation,
+  quantity: number
+): Promise<Item.Implementation | null> {
+  const sourceActor = item.actor;
+  if (!sourceActor) return null;
+
+  const maxQty = getItemStackQuantity(getDnd4eItemSystem(item).quantity);
+  const qty = clampTransferQuantity(quantity, maxQty);
+  const sourceItemId = item.id ?? "";
+  const crossActor = sourceActor.id !== targetActor.id;
+
+  const created = await createItemCopyOnActor(item, targetActor, qty, maxQty, !crossActor);
+  if (!created) return null;
+
+  const remaining = sourceActor.items.get(sourceItemId);
+  if (!remaining) return created;
+
+  // Re-read the live stack so a concurrent transfer cannot be overwritten by a stale count.
+  const liveQty = getItemStackQuantity(getDnd4eItemSystem(remaining).quantity);
+  if (liveQty > qty) {
+    await updateItemData(remaining, { "system.quantity": liveQty - qty });
   } else {
-    const remaining = sourceActor.items.get(sourceItemId);
-    if (remaining) {
-      await updateItemData(remaining, { "system.quantity": maxQty - qty });
-    }
+    await removeItemFromActor(sourceActor, sourceItemId);
   }
 
-  return created[0] ?? null;
+  return created;
 }
 
 function canTakeItem(item: Item.Implementation): boolean {
@@ -150,7 +164,7 @@ function canTakeItem(item: Item.Implementation): boolean {
   );
 }
 
-/** Stash uses LIMITED ownership for players; removal must match stash edit rights. */
+/** Removal from the stash must match stash edit rights, not plain item ownership. */
 function canTransferItemFromActor(item: Item.Implementation): boolean {
   if (!item.actor) return false;
   if (isStashActor(item.actor)) return canEditStash(item.actor);
@@ -188,9 +202,9 @@ export async function transferItemOntoStash(
   }
 
   const created = await transferItemToActor(item, stashActor, qty);
-  if (created) {
-    await logItemDepositedFromInventory(sourceActor, created, qty);
-  }
+  if (!created) return false;
+
+  await logItemDepositedFromInventory(sourceActor, created, qty);
   return true;
 }
 
@@ -205,7 +219,6 @@ export async function copyItemOntoStash(
   if (!canEditStash(stashActor)) return false;
   if (item.actor?.id === stashActor.id) return true;
 
-  const ItemClass = getItemClass();
   const maxQty = getItemStackQuantity(getDnd4eItemSystem(item).quantity);
   let qty = quantity;
   if (qty == null) {
@@ -213,31 +226,12 @@ export async function copyItemOntoStash(
     if (chosen === null) return false;
     qty = chosen;
   }
+  qty = clampTransferQuantity(qty, maxQty);
 
-  qty = Math.min(Math.max(1, Math.floor(qty)), maxQty);
+  const createdItem = await createItemCopyOnActor(item, stashActor, qty, maxQty, false);
+  if (!createdItem) return false;
 
-  const transformFirst = (source: Item.Implementation) => {
-    const data = itemToData(source);
-    if (qty < maxQty) return setItemQuantity(data, qty);
-    return data;
-  };
-
-  const toCreate =
-    typeof ItemClass.createWithContents === "function"
-      ? await ItemClass.createWithContents([item], {
-          transformFirst,
-        } as Parameters<NonNullable<ItemClass["createWithContents"]>>[1])
-      : [transformFirst(item)];
-
-  if (!toCreate?.length) return false;
-
-  const created = await createItemDocuments(toCreate, {
-    parent: stashActor,
-    keepId: false,
-  });
-
-  const createdItem = created[0] ?? null;
-  if (createdItem && source !== "inventory") {
+  if (source !== "inventory") {
     await logItemAddedFromExternal(createdItem, qty, sourceLabel, source);
   }
   return true;
@@ -253,7 +247,6 @@ export async function handleStashItemDropOnActor(
   const ItemClass = getItemClass();
   const item = await ItemClass.fromDropData(data);
   if (!item?.actor || !isStashActor(item.actor)) return false;
-  if (!canEditStash(item.actor)) return false;
   if (!canTransferItemFromActor(item)) {
     ui.notifications?.warn(localize("DND4E.WarnNoPermission"), { localize: false });
     return true;

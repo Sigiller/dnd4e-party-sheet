@@ -26,7 +26,10 @@ export interface Dnd4eActorSystem {
   encumbrance?: { value?: number; max?: number };
   skills?: Record<string, Dnd4eActorSkill>;
   senses?: {
-    special?: { value?: string[] | string; custom?: string };
+    special?: Record<string, { value?: boolean; range?: number | null }>;
+    allAround?: boolean;
+    blind?: boolean;
+    custom?: string;
   };
   languages?: Record<
     string,

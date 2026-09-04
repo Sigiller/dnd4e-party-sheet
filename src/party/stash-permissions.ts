@@ -35,11 +35,11 @@ function hasStashPermission(
   return stashOwnershipLevel(stashActor, user) >= minLevel;
 }
 
-/** Edit stash items, drag-drop, item controls. */
+/** Edit stash items, drag-drop, item controls. Foundry requires OWNER for embedded item writes. */
 export function canEditStash(stashActor: Actor.Implementation): boolean {
   const user = game.user;
   if (!user) return false;
-  return hasStashPermission(stashActor, user, CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED);
+  return hasStashPermission(stashActor, user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER);
 }
 
 /** Add/subtract party stash currency. */

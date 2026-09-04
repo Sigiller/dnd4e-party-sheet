@@ -182,13 +182,13 @@ export async function logItemWithdrawn(
   await postStashChatMessage(html, targetActor);
 }
 
-export async function logItemDeleted(item: Item.Implementation): Promise<void> {
+export async function logItemDeleted(item: { uuid?: string; name: string }): Promise<void> {
   const characterActor = game.user?.character ?? null;
   const ctx = getActingContext(characterActor);
   const html = formatMessage(chatKey("itemDeleted", ctx), {
     player: ctx.playerName,
     character: ctx.characterName ?? "",
-    item: formatItemLink({ uuid: item.uuid ?? undefined, name: item.name }),
+    item: formatItemLink(item),
   });
   await postStashChatMessage(html, characterActor ?? undefined);
 }
