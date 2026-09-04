@@ -1,9 +1,30 @@
+import type { Page } from "playwright";
 import { dismissBlockingNotifications, executeMacroByName, evaluateFoundry, getModuleApiStatus, isPartySheetOpen, sleep } from "../../../tools/foundry-e2e/src/evaluate.js";
 import { openPartySheetViaMacro, resetStashViaMacro } from "../../../tools/foundry-e2e/src/launchmacro.js";
 import type { E2eTestCase } from "../../../tools/foundry-e2e/src/types.js";
 import { PC_TYPE } from "./constants.js";
 
 const MODULE_ID = "dnd4e-party-sheet";
+const SHEET_SELECTOR = ".application.dnd4e-party-sheet";
+
+async function waitForPartySheet(page: Page): Promise<void> {
+  await page.waitForSelector(SHEET_SELECTOR, { timeout: 15000 });
+}
+
+/** Actor sheets may be AppV1 (ui.windows) or AppV2 (foundry.applications.instances). */
+async function isActorSheetOpen(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const g = globalThis as typeof globalThis & {
+      ui?: { windows?: Map<number, { document?: { documentName?: string } }> };
+      foundry?: {
+        applications?: { instances?: Map<string, { document?: { documentName?: string } }> };
+      };
+    };
+    const v1 = [...(g.ui?.windows?.values?.() ?? [])];
+    const v2 = [...(g.foundry?.applications?.instances?.values?.() ?? [])];
+    return [...v1, ...v2].some((a) => a?.document?.documentName === "Actor");
+  });
+}
 
 export const smokeTests: E2eTestCase[] = [
   {
@@ -29,10 +50,17 @@ export const smokeTests: E2eTestCase[] = [
     async run({ page, config }) {
       await resetStashViaMacro(page, config);
       await openPartySheetViaMacro(page, config);
-      await sleep(500);
+      await waitForPartySheet(page);
 
       if (!(await isPartySheetOpen(page))) {
         throw new Error("Party Sheet window not found after openPartySheet()");
+      }
+
+      // Redesign chrome: both ribbon tabs must expose the ARIA tab role.
+      for (const name of [/^overview$/i, /^stash$/i]) {
+        if ((await page.getByRole("tab", { name }).count()) === 0) {
+          throw new Error(`Tab with role="tab" and name ${name} not found`);
+        }
       }
     },
   },
@@ -42,7 +70,8 @@ export const smokeTests: E2eTestCase[] = [
     role: "gm",
     async run({ page, config }) {
       await executeMacroByName(page, config.macros.openPartySheet);
-      await sleep(800);
+      await waitForPartySheet(page);
+      await sleep(300);
 
       const stash = await evaluateFoundry(page, (id: string) => {
         const folder = game.modules.get(id)?.api?.getPartyFolder?.();
@@ -69,7 +98,7 @@ export const smokeTests: E2eTestCase[] = [
     role: "gm",
     async run({ page, config }) {
       await openPartySheetViaMacro(page, config);
-      await sleep(600);
+      await waitForPartySheet(page);
 
       const overview = await evaluateFoundry(
         page,
@@ -94,6 +123,43 @@ export const smokeTests: E2eTestCase[] = [
       if (overview.memberCount < 2) {
         throw new Error(`Expected ≥2 party members, got ${overview.memberCount}`);
       }
+
+      const cards = await page.locator('[data-testid="member-card"]').count();
+      if (cards !== overview.memberCount) {
+        throw new Error(`Expected ${overview.memberCount} member cards, rendered ${cards}`);
+      }
+    },
+  },
+
+  {
+    name: "Overview skills/languages collapse divider toggles",
+    role: "gm",
+    async run({ page, config }) {
+      await openPartySheetViaMacro(page, config);
+      await waitForPartySheet(page);
+      await page.getByRole("tab", { name: /^overview$/i }).click();
+      await sleep(200);
+
+      const divider = page.getByTestId("overview-collapse-divider");
+      if ((await divider.count()) === 0) {
+        throw new Error("Collapse divider not found on Overview tab");
+      }
+
+      const skillsBlock = page.locator(".party-skills-block");
+      const before = await skillsBlock.count();
+      await divider.click();
+      await sleep(300);
+      const after = await skillsBlock.count();
+      if (before === after) {
+        throw new Error(`Divider click did not toggle skills section (count ${before} → ${after})`);
+      }
+
+      // Restore the previous state (it persists per user via a client setting).
+      await divider.click();
+      await sleep(300);
+      if ((await skillsBlock.count()) !== before) {
+        throw new Error("Divider did not restore the initial expanded state");
+      }
     },
   },
 
@@ -102,18 +168,21 @@ export const smokeTests: E2eTestCase[] = [
     role: "gm",
     async run({ page, config }) {
       await openPartySheetViaMacro(page, config);
-      await sleep(400);
+      await waitForPartySheet(page);
 
-      const stashTab = page.getByRole("button", { name: /^stash$/i }).first();
-      if ((await stashTab.count()) > 0) {
-        await stashTab.click({ force: true });
-        await sleep(400);
+      const stashTab = page.getByRole("tab", { name: /^stash$/i }).first();
+      if ((await stashTab.count()) === 0) {
+        throw new Error('Stash tab (role="tab") not found');
       }
+      await stashTab.click();
 
-      const hasTotal = await page.getByText(/party total/i).count();
-      if (hasTotal === 0) {
-        throw new Error("Party Total label not visible on Stash tab");
-      }
+      await page
+        .getByText(/party total/i)
+        .first()
+        .waitFor({ state: "visible", timeout: 5000 })
+        .catch(() => {
+          throw new Error("Party Total label not visible on Stash tab");
+        });
     },
   },
 
@@ -122,7 +191,7 @@ export const smokeTests: E2eTestCase[] = [
     role: "player",
     async run({ page, config }) {
       await openPartySheetViaMacro(page, config);
-      await sleep(500);
+      await waitForPartySheet(page);
 
       if (!(await isPartySheetOpen(page))) {
         throw new Error("Player could not open Party Sheet");
@@ -135,23 +204,42 @@ export const smokeTests: E2eTestCase[] = [
     role: "gm",
     async run({ page, config }) {
       await openPartySheetViaMacro(page, config);
-      await sleep(500);
+      await waitForPartySheet(page);
+      await page.getByRole("tab", { name: /^overview$/i }).click();
+      await sleep(200);
 
-      const memberLink = page.locator('[data-action="open-actor"], button:has-text("Open")').first();
-      if ((await memberLink.count()) === 0) {
-        const nameLink = page.locator(".member-card a, .member-card button").first();
-        if ((await nameLink.count()) > 0) await nameLink.click();
-      } else {
-        await memberLink.click();
+      const nameLink = page
+        .locator('[data-testid="member-card"] h3[role="button"]')
+        .first();
+      if ((await nameLink.count()) === 0) {
+        throw new Error("Member card name link not found");
       }
-      await sleep(800);
+      await nameLink.click();
 
-      const sheetOpen = await evaluateFoundry(page, () => {
-        const sheets = [...(ui.windows?.values?.() ?? [])];
-        return sheets.length > 0;
-      });
-      if (!sheetOpen) {
-        console.warn("[e2e] Actor sheet open not detected via UI — skipping strict assert");
+      await page
+        .waitForFunction(
+          () => {
+            const g = globalThis as typeof globalThis & {
+              ui?: { windows?: Map<number, { document?: { documentName?: string } }> };
+              foundry?: {
+                applications?: {
+                  instances?: Map<string, { document?: { documentName?: string } }>;
+                };
+              };
+            };
+            const v1 = [...(g.ui?.windows?.values?.() ?? [])];
+            const v2 = [...(g.foundry?.applications?.instances?.values?.() ?? [])];
+            return [...v1, ...v2].some((a) => a?.document?.documentName === "Actor");
+          },
+          null,
+          { timeout: 10000 }
+        )
+        .catch(() => {
+          throw new Error("Actor sheet did not open after clicking member name");
+        });
+
+      if (!(await isActorSheetOpen(page))) {
+        throw new Error("Actor sheet not detected after member name click");
       }
     },
   },
@@ -159,15 +247,10 @@ export const smokeTests: E2eTestCase[] = [
   {
     name: "allowPlayerStashCurrency OFF (GM toggles world setting)",
     role: "gm",
-    async run({ page, config }) {
+    async run({ page }) {
       await evaluateFoundry(page, (id: string) => {
         return game.settings.set(id, "allowPlayerStashCurrency", false);
       }, MODULE_ID);
-
-      await page.reload({ waitUntil: "domcontentloaded" });
-      await page.waitForFunction(() => game?.ready === true, null, { timeout: 60000 });
-      await executeMacroByName(page, config.macros.signalReady);
-      await dismissBlockingNotifications(page);
 
       const setting = await evaluateFoundry(page, (id: string) =>
         game.settings.get(id, "allowPlayerStashCurrency")
@@ -177,6 +260,7 @@ export const smokeTests: E2eTestCase[] = [
       await evaluateFoundry(page, (id: string) => {
         return game.settings.set(id, "allowPlayerStashCurrency", true);
       }, MODULE_ID);
+      await dismissBlockingNotifications(page);
     },
   },
 ];

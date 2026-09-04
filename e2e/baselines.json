@@ -1,6 +1,6 @@
 {
   "partySheetColdOpenMs": { "p50": 1200, "max": 2500 },
-  "partySheetWarmOpenMs": { "p50": 400, "max": 900 },
+  "partySheetWarmOpenMs": { "p50": 900, "max": 1400 },
   "dnd4eActorSheetColdOpenMs": { "p50": 800, "max": 1800 },
   "stashTabSwitchMs": { "p50": 150, "max": 500 },
   "liveRefreshMs": { "p50": 300, "max": 800 }

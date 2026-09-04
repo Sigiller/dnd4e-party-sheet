@@ -55,13 +55,18 @@ E2E_USER_PLAYER2=Gigil
 - Active scene with tokens recommended for combat/damage tests
 - Optional: fox-4e-styling for manual visual QA
 
-## Hook Macros setup
+## Hook Macros setup — automatic
 
-Import macros from [`e2e/macros/`](macros/) into the world, then **Hook Macros → Settings**:
+**No manual import needed.** On every run the runner upserts all
+[`e2e/macros/*.js`](macros/) into the world as script macros (OBSERVER
+ownership so player sessions can execute them) and registers the
+**Hook Macros → `ready` → `QA_SignalReady`** hook if `launchmacro` is active.
+Injection piggybacks on the first GM test join (`inject-macros.ts`); editing a
+macro file locally updates the world copy on the next run.
 
 | Macro | Hook | Notes |
 |-------|------|-------|
-| `QA_SignalReady` | `ready` | Sets `window.__qa` for Playwright sync |
+| `QA_SignalReady` | `ready` (auto-registered) | Sets `window.__qa` for Playwright sync |
 | `QA_OpenPartySheet` | *(invoked by tests)* | |
 | `QA_ResetStash` | *(GM setup)* | |
 | `QA_PerfMark` | *(perf only)* | |
@@ -72,11 +77,11 @@ Import macros from [`e2e/macros/`](macros/) into the world, then **Hook Macros �
 
 | File | Tests | Purpose |
 |------|-------|---------|
-| `smoke.test.ts` | 8 | Party sheet module smoke |
+| `smoke.test.ts` | 9 | Party sheet module smoke (tabs `role="tab"`, member cards, collapse divider) |
 | `system-regression.test.ts` | 4 | Module hooks vs dnd4e sheets |
 | `foundry-core.test.ts` | 12 | Foundry/dnd4e core sanity (sheets, chat, combat, NPC) |
 
-**Total:** 24 tests in `npm run e2e:smoke` (8 module + 4 regression + 12 foundry-core).
+**Total:** 25 tests in `npm run e2e:smoke` (9 module + 4 regression + 12 foundry-core).
 
 ### Foundry core fixtures (`.env`)
 

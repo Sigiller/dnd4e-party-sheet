@@ -22,10 +22,18 @@ async function measurePartySheetColdOpen(page: Page): Promise<number> {
 
 async function measurePartySheetWarmOpen(page: Page): Promise<number> {
   return evaluateFoundry(page, (id: string) => {
-    const apps = [...(ui.windows?.values?.() ?? [])];
-    for (const app of apps) {
-      if (String(app?.title ?? "").toLowerCase().includes("party")) {
-        app.close({ animate: false });
+    // Party sheet is ApplicationV2 — it lives in foundry.applications.instances.
+    const g = globalThis as typeof globalThis & {
+      foundry?: {
+        applications?: {
+          instances?: Map<string, { element?: HTMLElement; close?: (o?: object) => unknown }>;
+        };
+      };
+    };
+    const v2 = [...(g.foundry?.applications?.instances?.values?.() ?? [])];
+    for (const app of v2) {
+      if (app?.element?.classList?.contains("dnd4e-party-sheet")) {
+        app.close?.({ animate: false });
       }
     }
     const t0 = performance.now();
@@ -66,9 +74,7 @@ export const perfTests: PerfTestCase[] = [
       await openPartySheetViaMacro(page, config);
       await sleep(200);
       const stashSwitch = await page.evaluate(async () => {
-        const tab = [...document.querySelectorAll("button, a")].find((el) =>
-          /stash/i.test(el.textContent ?? "")
-        );
+        const tab = document.querySelector('[data-testid="sheet-tab-stash"]');
         if (!tab) return 0;
         const t0 = performance.now();
         (tab as HTMLElement).click();
