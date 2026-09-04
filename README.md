@@ -69,8 +69,8 @@ Commit `dist/` before tagging a release, or let GitHub Actions build on tag push
 
 ```bash
 # Bump version in module.json, then:
-git tag v0.7.0
-git push origin v0.7.0
+git tag v0.7.2
+git push origin v0.7.2
 ```
 
 Husky pre-push blocks tag pushes when the tag (`vX.Y.Z`) does not match
