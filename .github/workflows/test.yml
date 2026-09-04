@@ -15,11 +15,13 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-      - name: Clone dnd4e system for verify scripts
+      - name: Clone pinned dnd4e system for verify scripts
         run: |
           set -euo pipefail
+          REPO_URL=$(jq -r .dnd4eSystem.repository package.json)
+          VERSION=$(jq -r .dnd4eSystem.version package.json)
           mkdir -p ../../systems
-          git clone --depth 1 --branch 0.7.14 https://github.com/EndlesNights/dnd4eBeta.git ../../systems/dnd4e
+          git clone --depth 1 --branch "$VERSION" "$REPO_URL" ../../systems/dnd4e
 
       - run: npm ci
       - run: npm run check

@@ -9,7 +9,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const moduleRoot = path.resolve(__dirname, "..");
 const systemRoot = path.resolve(moduleRoot, "../../systems/dnd4e");
-const EXPECTED_VERSION = "0.9.2";
+const pkg = JSON.parse(fs.readFileSync(path.join(moduleRoot, "package.json"), "utf8"));
+const EXPECTED_VERSION = pkg.dnd4eSystem.version;
 const ACTOR_SHEET_REL = "module/applications/sheets/actor-sheet.mjs";
 
 function read(rel) {
